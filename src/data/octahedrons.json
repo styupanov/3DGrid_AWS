@@ -1,0 +1,7 @@
+[
+  { "id": "1", "parentId": null, "level": 1, "position": { "lon": 37.62, "lat": 55.75, "height": 0 } },
+  { "id": "2", "parentId": "1", "level": 2, "position": { "lon": 37.621, "lat": 55.751, "height": 0 } },
+  { "id": "3", "parentId": "1", "level": 2, "position": { "lon": 37.619, "lat": 55.751, "height": 0 } },
+  { "id": "4", "parentId": "2", "level": 3, "position": { "lon": 37.622, "lat": 55.752, "height": 0 } },
+  { "id": "5", "parentId": "3", "level": 3, "position": { "lon": 37.618, "lat": 55.752, "height": 0 } }
+]
