@@ -2,6 +2,8 @@ import { useState } from 'react'
 
 const UI = ({ onToggleLevel, activeLevels, onSearch }) => {
   const [searchId, setSearchId] = useState('')
+  const [searchParentId, setSearchParentId] = useState('')
+  const levels = [2, 3, 4, 5]
 
   return (
     <div
@@ -17,11 +19,12 @@ const UI = ({ onToggleLevel, activeLevels, onSearch }) => {
     >
       <div>
         <strong>Levels filter</strong>
-        {Array.from({ length: 5 }, (_, i) => i + 1).map((level) => (
+        {levels.map((level) => (
           <div key={level}>
             <label>
               <input
-                type="checkbox"
+                type="radio"
+                name="level"
                 checked={activeLevels.includes(level)}
                 onChange={() => onToggleLevel(level)}
               />
@@ -31,7 +34,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch }) => {
         ))}
       </div>
 
-      <div style={{ marginTop: 10 }}>
+      <div style={{marginTop: 10}}>
         <strong>Search by ID</strong>
         <div>
           <input
@@ -40,6 +43,18 @@ const UI = ({ onToggleLevel, activeLevels, onSearch }) => {
             placeholder="Enter ID..."
           />
           <button onClick={() => onSearch(searchId)}>Search</button>
+        </div>
+      </div>
+
+      <div style={{marginTop: 10}}>
+        <strong>Search by Parent ID</strong>
+        <div>
+          <input
+            value={searchParentId}
+            onChange={(e) => setSearchParentId(e.target.value)}
+            placeholder="Enter Parent ID..."
+          />
+          <button onClick={() => onSearch(searchParentId, true)}>Search</button>
         </div>
       </div>
     </div>

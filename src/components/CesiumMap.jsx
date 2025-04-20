@@ -17,6 +17,130 @@ const CesiumMap = () => {
   const [renderedFeature, setRenderedFeature] = useState(null)
   const [copiedKey, setCopiedKey] = useState(null)
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
+  const [selectedLevel, setSelectedLevel] = useState(5)
+  const [selectedCellId, setSelectedCellId] = useState(null)
+  const [selectedCellLevel, setSelectedCellLevel] = useState(null)
+
+  const loadTileset = async (level) => {
+    try {
+      const viewer = viewerRef.current
+      if (!viewer) throw new Error('Viewer is not initialized yet')
+
+      viewer.scene.primitives.removeAll()
+
+      const tileset = await Cesium3DTileset.fromUrl(
+        `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl${level}/tileset.json`
+      )
+      viewer.scene.primitives.add(tileset)
+      await viewer.zoomTo(tileset)
+      console.log(`%c[✓] Tileset lvl${level} loaded & zoomed`, 'color: green')
+    } catch (error) {
+      console.error(`%c[✗] Error loading tileset lvl${level}:`, 'color: red', error)
+    }
+  }
+
+  const showParentFeature = () => {
+    if (!renderedFeature) return
+    const parentId = renderedFeature.getProperty('parent_id')
+    const level = parseInt(renderedFeature.getProperty('level'))
+
+    if (!parentId || isNaN(level)) {
+      console.warn('Нет данных о родителе или уровне.')
+      return
+    }
+
+    const newLevel = level + 1
+
+    // Сброс текущего
+    if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
+      try {
+        selectedFeatureRef.current.color = Color.WHITE
+      } catch (e) {
+        console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
+      }
+      selectedFeatureRef.current = null
+      setRenderedFeature(null)
+    }
+
+    setSelectedLevel(newLevel)
+
+    loadTileset(newLevel).then(() => {
+      setTimeout(() => {
+        const viewer = viewerRef.current
+        const scene = viewer?.scene
+
+        const tileset = scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
+        if (!tileset) return
+
+        const highlightTile = (tile) => {
+          if (tile.content?.featuresLength > 0) {
+            for (let i = 0; i < tile.content.featuresLength; i++) {
+              const feature = tile.content.getFeature(i)
+              const cellId = feature.getProperty('cell_id')
+
+              if (cellId === parentId.toString()) {
+                feature.color = Color.BLUE
+                selectedFeatureRef.current = feature
+                setRenderedFeature(feature)
+              } else {
+                feature.color = new Color(1, 1, 1, 0.05) // полупрозрачный
+              }
+            }
+          }
+          tile.children?.forEach(highlightTile)
+        }
+
+        highlightTile(tileset.root)
+      }, 500)
+    })
+  }
+
+  const handleSearch = (searchId, isParentSearch = false) => {
+    const viewer = viewerRef.current
+    const scene = viewer?.scene
+
+    if (!scene || !searchId) return
+
+    const tileset = scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
+    if (!tileset) return
+
+    let found = false
+
+    const searchInTile = (tile) => {
+      if (tile.content?.featuresLength > 0) {
+        for (let i = 0; i < tile.content.featuresLength; i++) {
+          const feature = tile.content.getFeature(i)
+          const targetValue = isParentSearch ? feature.getProperty('parent_id') : feature.getProperty('cell_id')
+          console.log('targetValue: ', targetValue)
+          console.log('searchId: ', searchId)
+          if (targetValue === searchId) {
+            if (!isParentSearch && selectedFeatureRef.current && selectedFeatureRef.current !== feature) {
+              selectedFeatureRef.current.color = Color.WHITE
+            }
+
+            feature.color = Color.BLUE
+
+            if (!isParentSearch) {
+              selectedFeatureRef.current = feature
+              setRenderedFeature(feature)
+              setSelectedCellId(searchId)
+              setSelectedCellLevel(feature.getProperty('level'))
+            }
+
+            found = true
+          }
+        }
+      }
+
+      tile.children?.forEach(searchInTile)
+    }
+
+    searchInTile(tileset.root)
+
+    if (!found) {
+      console.warn(`Cell ID ${searchId} not found.`)
+    }
+  }
 
   useEffect(() => {
     const viewer = new Viewer('cesiumContainer', {
@@ -28,25 +152,30 @@ const CesiumMap = () => {
 
     viewerRef.current = viewer
 
-    const loadTileset = async () => {
-      try {
-        const tileset = await Cesium3DTileset.fromUrl('https://my-3d-tiles.s3.eu-north-1.amazonaws.com/tiles/test/tileset.json')
-        viewer.scene.primitives.add(tileset)
-        await viewer.zoomTo(tileset)
-        console.log('%c[✓] Tileset loaded & zoomed', 'color: green')
-      } catch (error) {
-        console.error('%c[✗] Error loading tileset:', 'color: red', error)
-      }
-    }
+    // const loadTileset = async () => {
+    //   try {
+    //
+    //     //FIXME OLD ONE
+    //     // const tileset = await Cesium3DTileset.fromUrl('https://my-3d-tiles.s3.eu-north-1.amazonaws.com/tiles/test/tileset.json')
+    //     const tileset = await Cesium3DTileset.fromUrl('https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl5/tileset.json')
+    //     viewer.scene.primitives.add(tileset)
+    //     await viewer.zoomTo(tileset)
+    //     console.log('%c[✓] Tileset loaded & zoomed', 'color: green')
+    //   } catch (error) {
+    //     console.error('%c[✗] Error loading tileset:', 'color: red', error)
+    //   }
+    // }
 
-    loadTileset()
+
+
+    loadTileset(selectedLevel)
 
     const handler = new ScreenSpaceEventHandler(viewer.scene.canvas)
 
     handler.setInputAction((movement) => {
       const pickedFeature = viewer.scene.pick(movement.position)
       console.log('%c[✓] Picked Feature:', 'color: cyan', pickedFeature)
-      debugger
+      // debugger
       // Сброс цвета предыдущей фичи
       if (selectedFeatureRef.current && typeof selectedFeatureRef.current.color !== 'undefined') {
         try {
@@ -60,8 +189,12 @@ const CesiumMap = () => {
         if (pickedFeature.color) pickedFeature.color = Color.BLUE
         selectedFeatureRef.current = pickedFeature
         setRenderedFeature(pickedFeature)
+        setSelectedCellId(pickedFeature.getProperty('cell_id'))
+        setSelectedCellLevel(pickedFeature.getProperty('level'))
         setPopupPosition({ x: movement.position.x, y: movement.position.y })
       } else {
+        setSelectedCellId(null)
+        setSelectedCellLevel(null)
         selectedFeatureRef.current = null
         setRenderedFeature(null)
       }
@@ -92,9 +225,25 @@ const CesiumMap = () => {
     <>
       <div id="cesiumContainer" style={{ width: '100%', height: '100vh' }} />
       <UI
-        onToggleLevel={() => {}}
-        activeLevels={[1, 2, 3, 4, 5]}
-        onSearch={() => {}}
+        onToggleLevel={(level) => {
+          // Сбросить предыдущую выбранную фичу и скрыть попап
+          if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
+            try {
+              selectedFeatureRef.current.color = Color.WHITE
+            } catch (e) {
+              console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
+            }
+            selectedFeatureRef.current = null
+            setRenderedFeature(null)
+            setSelectedCellId(null)
+            setSelectedCellLevel(null)
+          }
+
+          setSelectedLevel(level)
+          loadTileset(level)
+        }}
+        activeLevels={[selectedLevel]}
+        onSearch={handleSearch}
       />
       {renderedFeature && (
         <div
@@ -116,7 +265,11 @@ const CesiumMap = () => {
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <strong>Selected Feature</strong>
             <button
-              onClick={() => setRenderedFeature(null)}
+              onClick={() => {
+                setRenderedFeature(null)
+                setSelectedCellId(null)
+                setSelectedCellLevel(null)
+              }}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -173,6 +326,126 @@ const CesiumMap = () => {
               })}
             </div>
           )}
+          <button
+            onClick={showParentFeature}
+            style={{
+              marginTop: '10px',
+              backgroundColor: '#0066cc',
+              border: 'none',
+              color: 'white',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              pointerEvents: 'auto'
+            }}
+          >
+            Показать родительские айтемы
+          </button>
+          <button
+            onClick={async () => {
+              if (selectedCellId && selectedCellLevel) {
+                // Сброс текущей фичи
+                if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
+                  try {
+                    selectedFeatureRef.current.color = Color.WHITE
+                  } catch (e) {
+                    console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
+                  }
+                  selectedFeatureRef.current = null
+                  setRenderedFeature(null)
+                }
+
+                const newLevel = parseInt(selectedCellLevel)
+                setSelectedLevel(newLevel)
+                console.log('newLevel: ', newLevel)
+                await loadTileset(newLevel)
+                setTimeout(() => {
+                  handleSearch(selectedCellId)
+                }, 500)
+              }
+            }}
+            disabled={renderedFeature?.getProperty('cell_id') === selectedCellId}
+            style={{
+              marginTop: '8px',
+              backgroundColor: renderedFeature?.getProperty('cell_id') === selectedCellId ? '#999' : '#00aa88',
+              border: 'none',
+              color: 'white',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              cursor: renderedFeature?.getProperty('cell_id') === selectedCellId ? 'default' : 'pointer',
+              pointerEvents: 'auto',
+              opacity: renderedFeature?.getProperty('cell_id') === selectedCellId ? 0.6 : 1
+            }}
+          >
+            Вернуться в первоначальный айтем
+          </button>
+          <button
+            onClick={() => {
+              if (!renderedFeature || !selectedCellId) return
+
+              const level = parseInt(renderedFeature.getProperty('level'))
+              const current_cell_id = renderedFeature.getProperty('cell_id')
+              if (isNaN(level) || level <= 1) return
+
+              const newLevel = level - 1
+
+              // Сброс текущей фичи
+              if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
+                try {
+                  selectedFeatureRef.current.color = Color.WHITE
+                } catch (e) {
+                  console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
+                }
+                selectedFeatureRef.current = null
+                setRenderedFeature(null)
+              }
+
+              setSelectedLevel(newLevel)
+              console.log('setSelectedLevel newLevel: ', newLevel)
+              loadTileset(newLevel).then(() => {
+                setTimeout(() => {
+                  const viewer = viewerRef.current
+                  const scene = viewer?.scene
+
+                  const tileset = scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
+                  if (!tileset) return
+
+                  const highlightChildren = (tile) => {
+                    if (tile.content?.featuresLength > 0) {
+                      // debugger
+                      for (let i = 0; i < tile.content.featuresLength; i++) {
+                        const feature = tile.content.getFeature(i)
+                        const parentId = feature.getProperty('parent_id')
+                        console.log('Feature::')
+                        console.log(current_cell_id.toString(), ' :current_cell_id:')
+                        console.log(parentId, ' :parentId')
+                        if (parentId === current_cell_id.toString()) {
+                          feature.color = Color.BLUE
+                        } else {
+                          feature.color = new Color(1, 1, 1, 0.05)
+                        }
+                      }
+                    }
+                    tile.children?.forEach(highlightChildren)
+                  }
+
+                  highlightChildren(tileset.root)
+                }, 3000)
+              })
+            }}
+            style={{
+              marginTop: '8px',
+              backgroundColor: '#0066cc',
+              border: 'none',
+              color: 'white',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              pointerEvents: 'auto'
+            }}
+          >
+            Показать дочерние айтемы
+          </button>
         </div>
       )}
     </>
