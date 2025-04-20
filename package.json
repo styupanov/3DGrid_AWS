@@ -10,8 +10,8 @@
   "dependencies": {
     "cesium": "^1.112.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "resium": "^2.5.1"
+    "react-dom": "^18.2.0"
+//    "resium": "^2.5.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
