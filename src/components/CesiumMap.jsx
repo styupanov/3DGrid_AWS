@@ -20,6 +20,8 @@ const CesiumMap = () => {
   const [selectedLevel, setSelectedLevel] = useState(5)
   const [selectedCellId, setSelectedCellId] = useState(null)
   const [selectedCellLevel, setSelectedCellLevel] = useState(null)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
 
   const loadTileset = async (level) => {
     try {
@@ -143,6 +145,30 @@ const CesiumMap = () => {
   }
 
   useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (isDragging) {
+        setPopupPosition((prev) => ({
+          x: e.clientX - dragOffset.x,
+          y: e.clientY - dragOffset.y,
+        }))
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging, dragOffset])
+
+  useEffect(() => {
+
     const viewer = new Viewer('cesiumContainer', {
       sceneMode: 3,
       baseLayerPicker: true,
@@ -262,7 +288,23 @@ const CesiumMap = () => {
             pointerEvents: 'none'
           }}
         >
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'move',
+              userSelect: 'none',
+              pointerEvents: 'auto'
+            }}
+            onMouseDown={(e) => {
+              setIsDragging(true)
+              setDragOffset({
+                x: e.clientX - popupPosition.x,
+                y: e.clientY - popupPosition.y,
+              })
+            }}
+          >
             <strong>Selected Feature</strong>
             <button
               onClick={() => {
