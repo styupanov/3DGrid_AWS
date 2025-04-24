@@ -23,6 +23,43 @@ const CesiumMap = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
 
+  const colorByType = () => {
+    const viewer = viewerRef.current
+    const scene = viewer?.scene
+
+    if (!scene) return
+
+    const tileset = scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
+    if (!tileset) return
+
+    const applyColoring = (tile) => {
+      if (tile.content?.featuresLength > 0) {
+        for (let i = 0; i < tile.content.featuresLength; i++) {
+          const feature = tile.content.getFeature(i)
+          const type = feature.getProperty('type')?.toLowerCase()
+
+          switch (type) {
+            case 'blue':
+              feature.color = Color.BLUE
+              break
+            case 'red':
+              feature.color = Color.RED
+              break
+            case 'green':
+              feature.color = Color.GREEN
+              break
+            default:
+              feature.color = Color.WHITE
+              break
+          }
+        }
+      }
+      tile.children?.forEach(applyColoring)
+    }
+
+    applyColoring(tileset.root)
+  }
+
   const loadTileset = async (level) => {
     try {
       const viewer = viewerRef.current
@@ -270,6 +307,7 @@ const CesiumMap = () => {
         }}
         activeLevels={[selectedLevel]}
         onSearch={handleSearch}
+        onColorByType={colorByType}
       />
       {renderedFeature && (
         <div

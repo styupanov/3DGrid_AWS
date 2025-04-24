@@ -1,9 +1,15 @@
 import { useState } from 'react'
 
-const UI = ({ onToggleLevel, activeLevels, onSearch }) => {
+const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType }) => {
   const [searchId, setSearchId] = useState('')
   const [searchParentId, setSearchParentId] = useState('')
   const levels = [2, 3, 4, 5]
+
+  const handleKeyDown = (e, isParent) => {
+    if (e.key === 'Enter') {
+      onSearch(isParent ? searchParentId : searchId, isParent)
+    }
+  }
 
   return (
     <div
@@ -15,6 +21,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch }) => {
         padding: 10,
         borderRadius: 4,
         zIndex: 999,
+        minWidth: 220,
       }}
     >
       <div>
@@ -34,28 +41,34 @@ const UI = ({ onToggleLevel, activeLevels, onSearch }) => {
         ))}
       </div>
 
-      <div style={{marginTop: 10}}>
+      <div style={{ marginTop: 10 }}>
         <strong>Search by ID</strong>
         <div>
           <input
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, false)}
             placeholder="Enter ID..."
           />
           <button onClick={() => onSearch(searchId)}>Search</button>
         </div>
       </div>
 
-      <div style={{marginTop: 10}}>
+      <div style={{ marginTop: 10 }}>
         <strong>Search by Parent ID</strong>
         <div>
           <input
             value={searchParentId}
             onChange={(e) => setSearchParentId(e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, true)}
             placeholder="Enter Parent ID..."
           />
           <button onClick={() => onSearch(searchParentId, true)}>Search</button>
         </div>
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <button onClick={onColorByType}>Разметить по типу</button>
       </div>
     </div>
   )
