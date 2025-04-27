@@ -211,6 +211,9 @@ const CesiumMap = () => {
       baseLayerPicker: true,
       infoBox: false,
       selectionIndicator: false,
+      timeline: false,
+      animation: false,
+      creditContainer: document.createElement('div')
     })
 
     viewerRef.current = viewer
