@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterProps }) => {
+const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterProps, filterProps }) => {
   const [searchId, setSearchId] = useState('')
   const [searchParentId, setSearchParentId] = useState('')
   const levels = [2, 3, 4, 5]
@@ -73,9 +73,27 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
 
       <div style={{ marginTop: 10 }}>
         <strong>Фильтрация по пропсам</strong>
-        <div><label><input type="checkbox" onChange={e => setFilterProps(prev => ({ ...prev, pc_build3d: e.target.checked }))} /> pc_build3d</label></div>
-        <div><label><input type="checkbox" onChange={e => setFilterProps(prev => ({ ...prev, pc_green3d: e.target.checked }))} /> pc_green3d</label></div>
-        <div><label><input type="checkbox" onChange={e => setFilterProps(prev => ({ ...prev, pc_roads3d: e.target.checked }))} /> pc_roads3d</label></div>
+        <div><label>
+          <input
+            type="checkbox"
+            checked={filterProps.pc_build3d}
+            onChange={e => setFilterProps(prev => ({ ...prev, pc_build3d: e.target.checked }))}
+          />
+          pc_build3d</label></div>
+        <div><label>
+          <input
+            type="checkbox"
+            checked={filterProps.pc_green3d}
+            onChange={e => setFilterProps(prev => ({ ...prev, pc_green3d: e.target.checked }))}
+          />
+          pc_green3d</label></div>
+        <div><label>
+          <input
+            type="checkbox"
+            checked={filterProps.pc_roads3d}
+            onChange={e => setFilterProps(prev => ({ ...prev, pc_green3d: e.target.checked }))}
+          />
+          pc_roads3d</label></div>
       </div>
     </div>
   )

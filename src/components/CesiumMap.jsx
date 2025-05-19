@@ -352,10 +352,11 @@ const CesiumMap = () => {
             setSelectedCellId(null)
             setSelectedCellLevel(null)
           }
-
+          setFilterProps({ pc_build3d: false, pc_green3d: false, pc_roads3d: false })
           setSelectedLevel(level)
           loadTileset(level)
         }}
+        filterProps={filterProps}
         activeLevels={[selectedLevel]}
         onSearch={handleSearch}
         onColorByType={colorByType}
