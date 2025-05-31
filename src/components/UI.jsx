@@ -90,10 +90,10 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
         <div><label>
           <input
             type="checkbox"
-            checked={filterProps.pc_roads3d}
-            onChange={e => setFilterProps(prev => ({ ...prev, pc_green3d: e.target.checked }))}
+            checked={filterProps.pc_roads_3d}
+            onChange={e => setFilterProps(prev => ({ ...prev, pc_roads_3d: e.target.checked }))}
           />
-          pc_roads3d</label></div>
+          pc_roads_3d</label></div>
       </div>
     </div>
   )

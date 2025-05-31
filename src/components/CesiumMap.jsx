@@ -25,7 +25,7 @@ const CesiumMap = () => {
   const [filterProps, setFilterProps] = useState({
     pc_build3d: false,
     pc_green3d: false,
-    pc_roads3d: false
+    pc_roads_3d: false
   })
 
   const colorByType = () => {
@@ -65,36 +65,70 @@ const CesiumMap = () => {
     applyColoring(tileset.root)
   }
 
-  const applyFeatureFilter = (tileset) => {
-    const props = Object.keys(filterProps).filter(key => filterProps[key])
-
-    if (props.length === 0) {
-      // Если ничего не выбрано — показать все фичи
-      const resetTile = (tile) => {
-        if (tile.content?.featuresLength > 0) {
-          for (let i = 0; i < tile.content.featuresLength; i++) {
-            tile.content.getFeature(i).show = true
-          }
-        }
-        tile.children?.forEach(resetTile)
-      }
-      resetTile(tileset.root)
+  const applyFilterToTileset = (tileset, activeProps) => {
+    if (!tileset || !activeProps || activeProps.length === 0) {
+      // Если нет фильтров — показываем всё
+      tileset.style = undefined
       return
     }
 
-    const filterTile = (tile) => {
-      if (tile.content?.featuresLength > 0) {
-        for (let i = 0; i < tile.content.featuresLength; i++) {
-          const feature = tile.content.getFeature(i)
-          const shouldShow = props.some(prop => parseFloat(feature.getProperty(prop)) > 0)
-          feature.show = shouldShow
-        }
-      }
-      tile.children?.forEach(filterTile)
-    }
+    const condition = activeProps.map(prop => `\${${prop}} > 5`).join(' && ')
 
-    filterTile(tileset.root)
+    tileset.style = new Cesium.Cesium3DTileStyle({
+      show: {
+        conditions: [
+          [condition, "true"],
+          ["true", "false"]
+        ]
+      }
+    })
+
+    console.log(`[✓] Applied tile style filter: ${condition}`)
   }
+
+  // const applyFeatureFilter = (tileset) => {
+  //   const props = Object.keys(filterProps).filter(key => filterProps[key])
+  //   console.log('applyFeatureFilter props: - ', props)
+  //   if (props.length === 0) {
+  //     // Если ничего не выбрано — показать все фичи
+  //     const resetTile = (tile) => {
+  //       if (tile.content?.featuresLength > 0) {
+  //         for (let i = 0; i < tile.content.featuresLength; i++) {
+  //           tile.content.getFeature(i).show = true
+  //         }
+  //       }
+  //       tile.children?.forEach(resetTile)
+  //     }
+  //     resetTile(tileset.root)
+  //     return
+  //   }
+  //
+  //   const filterTile = (tile) => {
+  //     if (tile.content?.featuresLength > 0) {
+  //       for (let i = 0; i < tile.content.featuresLength; i++) {
+  //         const feature = tile.content.getFeature(i)
+  //
+  //         if (props.length === 0) {
+  //           feature.show = true
+  //           continue
+  //         }
+  //
+  //         const shouldShow = props.every((prop) => {
+  //           const val = parseFloat(feature.getProperty(prop))
+  //           console.log('val: ', val)
+  //           console.log('!isNaN(val) && val > 0', !isNaN(val) && val > 0)
+  //           return !isNaN(val) && val > 0
+  //         })
+  //
+  //         feature.show = false
+  //       }
+  //     }
+  //
+  //     tile.children?.forEach(filterTile)
+  //   }
+  //
+  //   filterTile(tileset.root)
+  // }
 
   const loadTileset = async (level) => {
     try {
@@ -103,18 +137,19 @@ const CesiumMap = () => {
 
       viewer.scene.primitives.removeAll()
 
-      // const tileset = await Cesium3DTileset.fromUrl(
-      //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/marked/lvl${level}/tileset.json`
-      // )
       const tileset = await Cesium3DTileset.fromUrl(
-        `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl5tetsfme/lvl4_test/tileset/tileset.json`
+        `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl${level}m/tileset/tileset.json`
+      //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/marked/lvl${level}/tileset.json`
       )
+      // const tileset = await Cesium3DTileset.fromUrl(
+      //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl5tetsfme/lvl4_test/tileset/tileset.json`
+      // )
       viewer.scene.primitives.add(tileset)
       await viewer.zoomTo(tileset)
-      applyFeatureFilter(tileset)
+      applyFilterToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]))
       console.log(`%c[✓] Tileset lvl${level} loaded & zoomed`, 'color: green')
     } catch (error) {
-      console.error(`%c[✗] Error loading tileset lvl${level}:`, 'color: red', error)
+      console.error(`%c[✗] Error loading tileset lvl${level}m:`, 'color: red', error)
     }
   }
 
@@ -332,7 +367,7 @@ const CesiumMap = () => {
     if (!viewer) return
 
     const tileset = viewer.scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
-    if (tileset) applyFeatureFilter(tileset)
+    if (tileset) applyFilterToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]))
   }, [filterProps])
 
   return (
@@ -352,7 +387,7 @@ const CesiumMap = () => {
             setSelectedCellId(null)
             setSelectedCellLevel(null)
           }
-          setFilterProps({ pc_build3d: false, pc_green3d: false, pc_roads3d: false })
+          setFilterProps({ pc_build3d: false, pc_green3d: false, pc_roads_3d: false })
           setSelectedLevel(level)
           loadTileset(level)
         }}
