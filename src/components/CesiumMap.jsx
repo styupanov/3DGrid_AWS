@@ -146,13 +146,31 @@ const CesiumMap = () => {
       // const tileset = await Cesium3DTileset.fromUrl(
       //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl5tetsfme/lvl4_test/tileset/tileset.json`
       // )
-      tileset.maximumScreenSpaceError = 2
-      tileset.dynamicScreenSpaceError = true
-      tileset.maximumMemoryUsage = 128
-      tileset.skipLevelOfDetail = true
-      tileset.immediatelyLoadDesiredLevelOfDetail = false
-      tileset.preloadWhenHidden = false
-      tileset.preloadFlightDestinations = false
+      tileset.maximumScreenSpaceError = 32 // Увеличьте для снижения детализации и повышения производительности
+      tileset.maximumMemoryUsage = 512 // Максимальное использование памяти в МБ
+      tileset.cullWithChildrenBounds = true // Использовать объединенные границы дочерних тайлов для отсечения
+      tileset.dynamicScreenSpaceError = true // Включить динамическую ошибку экранного пространства
+      tileset.dynamicScreenSpaceErrorDensity = 0.00278 // Плотность для динамической ошибки
+      tileset.dynamicScreenSpaceErrorFactor = 4.0 // Фактор для динамической ошибки
+      tileset.dynamicScreenSpaceErrorHeightFalloff = 0.25 // Падение высоты для динамической ошибки
+      tileset.skipLevelOfDetail = true // Пропуск уровней детализации
+      tileset.baseScreenSpaceError = 1024 // Базовая ошибка экранного пространства
+      tileset.skipScreenSpaceErrorFactor = 16 // Фактор ошибки для пропуска уровней
+      tileset.skipLevels = 1 // Количество уровней для пропуска
+      tileset.immediatelyLoadDesiredLevelOfDetail = false // Немедленная загрузка желаемого уровня детализации
+      tileset.loadSiblings = false // Загрузка соседних тайлов
+      tileset.foveatedScreenSpaceError = true // Приоритизация загрузки тайлов в центре экрана
+      tileset.foveatedConeSize = 0.1 // Размер конуса для фовеации
+      tileset.foveatedMinimumScreenSpaceErrorRelaxation = 0.0 // Минимальное ослабление ошибки экранного пространства для фовеации
+      tileset.foveatedTimeDelay = 0.2 // Задержка времени для фовеации
+
+      // tileset.maximumScreenSpaceError = 2
+      // tileset.dynamicScreenSpaceError = true
+      // tileset.maximumMemoryUsage = 128
+      // tileset.skipLevelOfDetail = true
+      // tileset.immediatelyLoadDesiredLevelOfDetail = false
+      // tileset.preloadWhenHidden = false
+      // tileset.preloadFlightDestinations = false
 
       viewer.scene.primitives.add(tileset)
       await viewer.zoomTo(tileset)
