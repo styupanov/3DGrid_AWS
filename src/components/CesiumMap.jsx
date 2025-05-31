@@ -27,6 +27,7 @@ const CesiumMap = () => {
     pc_green3d: false,
     pc_roads_3d: false
   })
+  const [loading, setLoading] = useState(false)
 
   const colorByType = () => {
     const viewer = viewerRef.current
@@ -131,10 +132,11 @@ const CesiumMap = () => {
   // }
 
   const loadTileset = async (level) => {
+
     try {
       const viewer = viewerRef.current
       if (!viewer) throw new Error('Viewer is not initialized yet')
-
+      setLoading(true)
       viewer.scene.primitives.removeAll()
 
       const tileset = await Cesium3DTileset.fromUrl(
@@ -144,9 +146,18 @@ const CesiumMap = () => {
       // const tileset = await Cesium3DTileset.fromUrl(
       //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl5tetsfme/lvl4_test/tileset/tileset.json`
       // )
+      tileset.maximumScreenSpaceError = 2
+      tileset.dynamicScreenSpaceError = true
+      tileset.maximumMemoryUsage = 128
+      tileset.skipLevelOfDetail = true
+      tileset.immediatelyLoadDesiredLevelOfDetail = false
+      tileset.preloadWhenHidden = false
+      tileset.preloadFlightDestinations = false
+
       viewer.scene.primitives.add(tileset)
       await viewer.zoomTo(tileset)
       applyFilterToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]))
+      setLoading(false)
       console.log(`%c[✓] Tileset lvl${level} loaded & zoomed`, 'color: green')
     } catch (error) {
       console.error(`%c[✗] Error loading tileset lvl${level}m:`, 'color: red', error)
@@ -292,6 +303,7 @@ const CesiumMap = () => {
     })
 
     viewerRef.current = viewer
+    viewer.scene.globe.depthTestAgainstTerrain = true
 
     // const loadTileset = async () => {
     //   try {
@@ -372,6 +384,21 @@ const CesiumMap = () => {
 
   return (
     <>
+      {loading && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '20px 40px',
+          borderRadius: '8px',
+          zIndex: 2000
+        }}>
+          Загрузка тайлсета...
+        </div>
+      )}
       <div id="cesiumContainer" style={{ width: '100%', height: '100vh' }} />
       <UI
         onToggleLevel={(level) => {
