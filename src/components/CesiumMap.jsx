@@ -6,6 +6,7 @@ import {
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
   Color,
+  OpenStreetMapImageryProvider,
 } from 'cesium'
 import { useState, useEffect, useRef } from 'react'
 import UI from './UI'
@@ -176,6 +177,7 @@ const CesiumMap = () => {
       await viewer.zoomTo(tileset)
       applyFilterToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]))
       setLoading(false)
+
       console.log(`%c[✓] Tileset lvl${level} loaded & zoomed`, 'color: green')
     } catch (error) {
       console.error(`%c[✗] Error loading tileset lvl${level}m:`, 'color: red', error)
@@ -311,8 +313,8 @@ const CesiumMap = () => {
   useEffect(() => {
 
     const viewer = new Viewer('cesiumContainer', {
-      sceneMode: 3,
       baseLayerPicker: true,
+      sceneMode: 3,
       infoBox: false,
       selectionIndicator: false,
       timeline: false,
@@ -321,7 +323,13 @@ const CesiumMap = () => {
     })
 
     viewerRef.current = viewer
-    viewer.scene.globe.depthTestAgainstTerrain = true
+
+    viewer.imageryLayers.addImageryProvider(
+      new OpenStreetMapImageryProvider({
+        url: 'https://a.tile.openstreetmap.org/'
+      })
+    )
+    // viewer.scene.globe.depthTestAgainstTerrain = true
 
     // const loadTileset = async () => {
     //   try {
