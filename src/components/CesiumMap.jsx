@@ -147,7 +147,7 @@ const CesiumMap = () => {
       // const tileset = await Cesium3DTileset.fromUrl(
       //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl5tetsfme/lvl4_test/tileset/tileset.json`
       // )
-      tileset.maximumScreenSpaceError = 32 // Увеличьте для снижения детализации и повышения производительности
+      tileset.maximumScreenSpaceError = 8 // Увеличьте для снижения детализации и повышения производительности
       tileset.maximumMemoryUsage = 512 // Максимальное использование памяти в МБ
       tileset.cullWithChildrenBounds = true // Использовать объединенные границы дочерних тайлов для отсечения
       tileset.dynamicScreenSpaceError = true // Включить динамическую ошибку экранного пространства
