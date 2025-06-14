@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import {Modal, Button, Slider, Checkbox, Select, Input, Card} from 'antd'
+import {DownOutlined, UpOutlined} from '@ant-design/icons';
 
 const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterProps, filterProps, onUpdateFilterRanges, selectedProperty, setSelectedProperty  }) => {
   const [searchId, setSearchId] = useState('')
@@ -11,6 +12,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
     pc_roads_3d: [0, 100],
   })
   const [selectedProp, setSelectedProp] = useState('pc_build3d')
+  const [collapsed, setCollapsed] = useState(false)
 
   useEffect(() => {
     onUpdateFilterRanges(sliderValues)
@@ -32,6 +34,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
 
   return (
     <Card
+      title="Filters"
       style={{
         position: 'absolute',
         top: 20,
@@ -43,86 +46,100 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
         padding: 8
       }}
     >
-      <div style={{ marginBottom: 10 }}>
-        <strong>Levels Filter</strong>
-        <Select
-          value={activeLevels[0]}
-          onChange={(value) => onToggleLevel(value)}
-          style={{ width: '100%', marginTop: 5 }}
+        <div
+          style={{
+            maxHeight: collapsed ? 0 : 1000,
+            overflow: 'hidden',
+            transition: 'max-height 0.3s ease-in-out',
+          }}
         >
-          {levels.map((level) => (
-            <Option key={level} value={level}>
-              Level {level}
-            </Option>
-          ))}
-        </Select>
-      </div>
+          <div style={{ marginBottom: 10 }}>
+            <strong>Levels</strong>
+            <Select
+              value={activeLevels[0]}
+              onChange={(value) => onToggleLevel(value)}
+              style={{ width: '100%', marginTop: 5 }}
+            >
+              {levels.map((level) => (
+                <Option key={level} value={level}>
+                  Level {level}
+                </Option>
+              ))}
+            </Select>
+          </div>
 
-      <div style={{ marginTop: 10 }}>
-        <strong>Select Property</strong>
-        <Select
-          style={{ width: '100%' }}
-          value={selectedProperty}
-          onChange={setSelectedProperty}
-          options={[
-            { label: 'pc_build3d', value: 'pc_build3d' },
-            { label: 'pc_green3d', value: 'pc_green3d' },
-            { label: 'pc_roads_3d', value: 'pc_roads_3d' }
-          ]}
-        />
-      </div>
-
-      <div style={{ marginBottom: 10, marginTop: 10 }}>
-        <strong style={{ marginBottom: 10, display: 'block'}} >Range for properties</strong>
-        {Object.keys(sliderValues).map((key) => (
-          <div key={key} style={{ marginBottom: 20 }}>
-
-            {/*<Checkbox*/}
-            {/*  checked={filterProps[key]}*/}
-            {/*  onChange={(e) => setFilterProps(prev => ({ ...prev, [key]: e.target.checked }))}*/}
-            {/*>*/}
-            {/*  {key}*/}
-            {/*</Checkbox>*/}
-            <div>{key}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>
-            <Slider
-              range={{ draggableTrack: true }}
-              value={sliderValues[key]}
-              onChange={(value) => handleSliderChange(key, value)}
-              min={0}
-              max={100}
+          <div style={{ marginTop: 10 }}>
+            <strong>Select Property</strong>
+            <Select
+              style={{ width: '100%' }}
+              value={selectedProperty}
+              onChange={setSelectedProperty}
+              options={[
+                { label: 'pc_build3d', value: 'pc_build3d' },
+                { label: 'pc_green3d', value: 'pc_green3d' },
+                { label: 'pc_roads_3d', value: 'pc_roads_3d' }
+              ]}
             />
           </div>
-        ))}
+
+          <div style={{ marginBottom: 10, marginTop: 10, marginLeft: 2, marginRight: 2 }}>
+            <strong style={{ marginBottom: 10, display: 'block'}} >Range for properties</strong>
+            {Object.keys(sliderValues).map((key) => (
+              <div key={key} style={{ marginBottom: 20 }}>
+
+                {/*<Checkbox*/}
+                {/*  checked={filterProps[key]}*/}
+                {/*  onChange={(e) => setFilterProps(prev => ({ ...prev, [key]: e.target.checked }))}*/}
+                {/*>*/}
+                {/*  {key}*/}
+                {/*</Checkbox>*/}
+                <div>{key}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>
+                <Slider
+                  range={{ draggableTrack: true }}
+                  value={sliderValues[key]}
+                  onChange={(value) => handleSliderChange(key, value)}
+                  min={0}
+                  max={100}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 10 }}>
+            <strong>Search by ID</strong>
+            <Input.Search
+              value={searchId}
+              onChange={(e) => setSearchId(e.target.value)}
+              onSearch={() => onSearch(searchId)}
+              onKeyDown={(e) => handleKeyDown(e, false)}
+              placeholder="Enter ID..."
+              enterButton
+              style={{ marginTop: 5 }}
+            />
+          </div>
+
+          <div style={{ marginTop: 10, marginBottom: 20 }}>
+            <strong>Search by Parent ID</strong>
+            <Input.Search
+              value={searchParentId}
+              onChange={(e) => setSearchParentId(e.target.value)}
+              onSearch={() => onSearch(searchParentId, true)}
+              onKeyDown={(e) => handleKeyDown(e, true)}
+              placeholder="Enter Parent ID..."
+              enterButton
+              style={{ marginTop: 5 }}
+            />
+          </div>
+
       </div>
 
-
-      <div style={{ marginTop: 10 }}>
-        <strong>Search by ID</strong>
-        <Input.Search
-          value={searchId}
-          onChange={(e) => setSearchId(e.target.value)}
-          onSearch={() => onSearch(searchId)}
-          onKeyDown={(e) => handleKeyDown(e, false)}
-          placeholder="Enter ID..."
-          enterButton
-          style={{ marginTop: 5 }}
+      <div style={{ textAlign: 'center', marginTop: collapsed ? 0 : 16 }}>
+        <Button
+          type="text"
+          icon={collapsed ? <DownOutlined /> : <UpOutlined />}
+          onClick={() => setCollapsed(!collapsed)}
         />
       </div>
-
-      <div style={{ marginTop: 10, marginBottom: 20 }}>
-        <strong>Search by Parent ID</strong>
-        <Input.Search
-          value={searchParentId}
-          onChange={(e) => setSearchParentId(e.target.value)}
-          onSearch={() => onSearch(searchParentId, true)}
-          onKeyDown={(e) => handleKeyDown(e, true)}
-          placeholder="Enter Parent ID..."
-          enterButton
-          style={{ marginTop: 5 }}
-        />
-      </div>
-
-
       {/*<div style={{ marginTop: 10 }}>*/}
       {/*  <Button onClick={() => setIsModalVisible(true)}>Фильтрация</Button>*/}
       {/*</div>*/}
