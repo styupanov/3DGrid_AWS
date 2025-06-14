@@ -1,10 +1,12 @@
-import { Viewer, Cartesian3, Cartographic, Cesium3DTileset } from 'cesium'
+import {Viewer, Cartesian3, Cartographic, Cesium3DTileset, Color} from 'cesium'
 import { useState, useEffect, useRef } from 'react'
 import UI from './UI'
 
 const CesiumMap = () => {
   const viewerRef = useRef()
   const [cameraHeight, setCameraHeight] = useState(0)
+
+
 
   useEffect(() => {
     const viewer = new Viewer('cesiumContainer', {

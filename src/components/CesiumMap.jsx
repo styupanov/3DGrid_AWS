@@ -28,7 +28,59 @@ const CesiumMap = () => {
     pc_green3d: false,
     pc_roads_3d: false
   })
+  const [filterRanges, setFilterRanges] = useState({
+    pc_build3d: [0, 100],
+    pc_green3d: [0, 100],
+    pc_roads_3d: [0, 100]
+  });
+  const [selectedProperty, setSelectedProperty] = useState('pc_build3d');
   const [loading, setLoading] = useState(false)
+
+  const new_colors = [
+    'rgba(0, 102, 255, 0.5)',
+    'rgba(0, 149, 255, 0.5)',
+    'rgba(71, 178, 255, 0.5)',
+    'rgba(94, 202, 239, 0.5)',
+    'rgba(240, 216, 30, 0.5)',
+    'rgba(255, 188, 0, 0.5)',
+    'rgba(255, 137, 3, 0.5)',
+    'rgba(255, 84, 0, 0.5)',
+    'rgba(255, 43, 0, 0.5)',
+    'rgba(255, 0, 0, 0.7)',
+  ]
+
+  // const colorBySelectedProperty = (tileset) => {
+  //   if (!tileset || !selectedProperty) return;
+  //
+  //   const colors = [
+  //     'color("rgba(0, 102, 255, 0.5)")',
+  //     'color("rgba(0, 149, 255, 0.5)")',
+  //     'color("rgba(71, 178, 255, 0.5)")',
+  //     'color("rgba(94, 202, 239, 0.5)")',
+  //     'color("rgba(240, 216, 30, 0.5)")',
+  //     'color("rgba(255, 188, 0, 0.5)")',
+  //     'color("rgba(255, 137, 3, 0.5)")',
+  //     'color("rgba(255, 84, 0, 0.5)")',
+  //     'color("rgba(255, 43, 0, 0.5)")',
+  //     'color("rgba(255, 0, 0, 0.7)")',
+  //   ];
+  //
+  //   const conditions = [];
+  //   for (let i = 0; i < 10; i++) {
+  //     const min = i * 10;
+  //     const max = i === 9 ? 10000000 : (i + 1) * 10;
+  //     conditions.push([`\${${selectedProperty}} >= ${min} && \${${selectedProperty}} < ${max}`, colors[i]]);
+  //   }
+  //
+  //   // fallback
+  //   conditions.push(['true', 'color("white")']);
+  //
+  //   tileset.style = new Cesium.Cesium3DTileStyle({
+  //     color: {
+  //       conditions
+  //     }
+  //   });
+  // };
 
   const colorByType = () => {
     const viewer = viewerRef.current
@@ -67,26 +119,61 @@ const CesiumMap = () => {
     applyColoring(tileset.root)
   }
 
-  const applyFilterToTileset = (tileset, activeProps) => {
-    if (!tileset || !activeProps || activeProps.length === 0) {
-      // Если нет фильтров — показываем всё
-      tileset.style = undefined
-      return
+  const applyStyleToTileset = (tileset, activeProps, filterRanges, selectedProperty) => {
+    if (!tileset) return;
+
+    const style = {};
+
+    // === 1. ФИЛЬТРАЦИЯ ===
+    if (activeProps?.length > 0) {
+      const filterConditions = activeProps.map(key => {
+        const [min, max] = filterRanges[key] || [0, 100];
+        return `\${${key}} >= ${min} && \${${key}} <= ${max}`;
+      });
+      const combinedFilter = filterConditions.join(' && ');
+
+      style.show = {
+        conditions: [
+          [combinedFilter, 'true'],
+          ['true', 'false']
+        ]
+      };
+
+      console.log(`[✓] Applied filter condition: ${combinedFilter}`);
     }
 
-    const condition = activeProps.map(prop => `\${${prop}} > 5`).join(' && ')
+    // === 2. РАСКРАСКА ===
+    if (selectedProperty) {
+      const colors = [
+        'color("rgba(0, 102, 255, 0.5)")',
+        'color("rgba(0, 149, 255, 0.5)")',
+        'color("rgba(71, 178, 255, 0.5)")',
+        'color("rgba(94, 202, 239, 0.5)")',
+        'color("rgba(240, 216, 30, 0.5)")',
+        'color("rgba(255, 188, 0, 0.5)")',
+        'color("rgba(255, 137, 3, 0.5)")',
+        'color("rgba(255, 84, 0, 0.5)")',
+        'color("rgba(255, 43, 0, 0.5)")',
+        'color("rgba(255, 0, 0, 0.7)")',
+      ];
 
-    tileset.style = new Cesium.Cesium3DTileStyle({
-      show: {
-        conditions: [
-          [condition, "true"],
-          ["true", "false"]
-        ]
+      const colorConditions = [];
+
+      for (let i = 0; i < 10; i++) {
+        const min = i * 10;
+        const max = i === 9 ? 10000000 : (i + 1) * 10;
+        colorConditions.push([`\${${selectedProperty}} >= ${min} && \${${selectedProperty}} < ${max}`, colors[i]]);
       }
-    })
 
-    console.log(`[✓] Applied tile style filter: ${condition}`)
-  }
+      colorConditions.push(['true', 'color("white")']);
+
+      style.color = { conditions: colorConditions };
+
+      console.log(`[✓] Applied color by ${selectedProperty}`);
+    }
+
+    tileset.style = new Cesium.Cesium3DTileStyle(style);
+  };
 
   // const applyFeatureFilter = (tileset) => {
   //   const props = Object.keys(filterProps).filter(key => filterProps[key])
@@ -175,7 +262,9 @@ const CesiumMap = () => {
 
       viewer.scene.primitives.add(tileset)
       await viewer.zoomTo(tileset)
-      applyFilterToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]))
+      applyStyleToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]), filterRanges, selectedProperty);
+      // applyFilterToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]))
+      // colorBySelectedProperty(tileset)
       setLoading(false)
 
       console.log(`%c[✓] Tileset lvl${level} loaded & zoomed`, 'color: green')
@@ -404,9 +493,22 @@ const CesiumMap = () => {
     const viewer = viewerRef.current
     if (!viewer) return
 
-    const tileset = viewer.scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
-    if (tileset) applyFilterToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]))
-  }, [filterProps])
+    const tileset = viewer.scene.primitives._primitives.find(p => p instanceof Cesium3DTileset);
+    if (tileset) {
+      applyStyleToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]), filterRanges, selectedProperty);
+      // applyFilterToTileset(tileset, );
+    }
+  }, [filterProps, filterRanges, selectedProperty]);
+
+  // useEffect(() => {
+  //   const viewer = viewerRef.current;
+  //   if (!viewer) return;
+  //
+  //   const tileset = viewer.scene.primitives._primitives.find(p => p instanceof Cesium3DTileset);
+  //   if (tileset) {
+  //     colorBySelectedProperty(tileset);
+  //   }
+  // }, [selectedProperty]);
 
   return (
     <>
@@ -449,6 +551,9 @@ const CesiumMap = () => {
         onSearch={handleSearch}
         onColorByType={colorByType}
         setFilterProps={setFilterProps}
+        onUpdateFilterRanges={setFilterRanges}
+        selectedProperty={selectedProperty}
+        setSelectedProperty={setSelectedProperty}
       />
       {renderedFeature && (
         <div
