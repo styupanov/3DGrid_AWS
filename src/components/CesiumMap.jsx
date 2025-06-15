@@ -10,6 +10,7 @@ import {
 } from 'cesium'
 import { useState, useEffect, useRef } from 'react'
 import UI from './UI'
+import {Divider} from 'antd';
 
 const CesiumMap = () => {
   const viewerRef = useRef()
@@ -609,49 +610,364 @@ const CesiumMap = () => {
               ×
             </button>
           </div>
+          <Divider
+            style={{
+              backgroundColor: 'white',
+            }}
+          />
           {typeof renderedFeature.getProperty === 'function' && (
-            <div style={{marginTop: '8px'}}>
-              {renderedFeature.getPropertyIds?.().map((name) => {
-                const value = renderedFeature.getProperty(name)?.toString()
+            <>
+              {/*FIXME Level*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('level')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Level:</strong> {Math.floor(renderedFeature.getProperty('level')?.toString())}{' '}
+                  {/*<button*/}
+                  {/*  style={{*/}
+                  {/*    marginLeft: '6px',*/}
+                  {/*    cursor: 'pointer',*/}
+                  {/*    backgroundColor: 'transparent',*/}
+                  {/*    border: '1px solid white',*/}
+                  {/*    color: 'white',*/}
+                  {/*    fontSize: '12px',*/}
+                  {/*    padding: '2px 6px',*/}
+                  {/*    borderRadius: '4px'*/}
+                  {/*  }}*/}
+                  {/*  onClick={(e) => {*/}
+                  {/*    e.stopPropagation()*/}
+                  {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
+                  {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
+                  {/*    setCopiedKey('level')*/}
+                  {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
+                  {/*  }}*/}
+                  {/*  title="Скопировать"*/}
+                  {/*>*/}
+                  {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
+                  {/*</button>*/}
+                </div>
+              </div>
 
-                return (
-                  <div
-                    key={name}
+              {/*FIXME Cell ID*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('cell_id')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Cell ID:</strong> {renderedFeature.getProperty('cell_id')?.toString()}{' '}
+                  <button
                     style={{
-                      marginBottom: '4px',
-                      wordBreak: 'break-word',
-                      whiteSpace: 'pre-wrap',
-                      pointerEvents: 'auto'
+                      marginLeft: '6px',
+                      cursor: 'pointer',
+                      backgroundColor: 'transparent',
+                      border: '1px solid white',
+                      color: 'white',
+                      fontSize: '12px',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
                     }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      console.log('[COPY]', renderedFeature.getProperty('cell_id')?.toString())
+                      navigator.clipboard.writeText(renderedFeature.getProperty('cell_id')?.toString())
+                      setCopiedKey('cell_id')
+                      setTimeout(() => setCopiedKey(null), 1500)
+                    }}
+                    title="Скопировать"
                   >
-                    <strong>{name}:</strong> {value}{' '}
-                    <button
-                      style={{
-                        marginLeft: '6px',
-                        cursor: 'pointer',
-                        backgroundColor: 'transparent',
-                        border: '1px solid white',
-                        color: 'white',
-                        fontSize: '12px',
-                        padding: '2px 6px',
-                        borderRadius: '4px'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        console.log('[COPY]', value)
-                        navigator.clipboard.writeText(value)
-                        setCopiedKey(name)
-                        setTimeout(() => setCopiedKey(null), 1500)
-                      }}
-                      title="Скопировать"
-                    >
-                      {copiedKey === name ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+                    {copiedKey === name ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/*FIXME Parent ID*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('parent_id')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Parent ID:</strong> {renderedFeature.getProperty('parent_id')?.toString()}{' '}
+                  <button
+                    style={{
+                      marginLeft: '6px',
+                      cursor: 'pointer',
+                      backgroundColor: 'transparent',
+                      border: '1px solid white',
+                      color: 'white',
+                      fontSize: '12px',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      console.log('[COPY]', renderedFeature.getProperty('parent_id')?.toString())
+                      navigator.clipboard.writeText(renderedFeature.getProperty('parent_id')?.toString())
+                      setCopiedKey('parent_id')
+                      setTimeout(() => setCopiedKey(null), 1500)
+                    }}
+                    title="Скопировать"
+                  >
+                    {copiedKey === name ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/*FIXME HEIGHT*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('Height')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Height:</strong> {Math.floor(renderedFeature.getProperty('Height')?.toString())}{' '}
+                  <button
+                    style={{
+                      marginLeft: '6px',
+                      cursor: 'pointer',
+                      backgroundColor: 'transparent',
+                      border: '1px solid white',
+                      color: 'white',
+                      fontSize: '12px',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      console.log('[COPY]', renderedFeature.getProperty('Height')?.toString())
+                      navigator.clipboard.writeText(renderedFeature.getProperty('Height')?.toString())
+                      setCopiedKey('Height')
+                      setTimeout(() => setCopiedKey(null), 1500)
+                    }}
+                    title="Скопировать"
+                  >
+                    {copiedKey === name ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/*FIXME Latitude*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('Latitude')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Latitude:</strong> {renderedFeature.getProperty('Latitude')?.toFixed(5)}{' '}
+                  <button
+                    style={{
+                      marginLeft: '6px',
+                      cursor: 'pointer',
+                      backgroundColor: 'transparent',
+                      border: '1px solid white',
+                      color: 'white',
+                      fontSize: '12px',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      console.log('[COPY]', renderedFeature.getProperty('Latitude')?.toString())
+                      navigator.clipboard.writeText(renderedFeature.getProperty('Latitude')?.toString())
+                      setCopiedKey('Latitude')
+                      setTimeout(() => setCopiedKey(null), 1500)
+                    }}
+                    title="Скопировать"
+                  >
+                    {copiedKey === name ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/*FIXME Longitude*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('Longitude')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Longitude:</strong> {renderedFeature.getProperty('Longitude')?.toFixed(5)}{' '}
+                  <button
+                    style={{
+                      marginLeft: '6px',
+                      cursor: 'pointer',
+                      backgroundColor: 'transparent',
+                      border: '1px solid white',
+                      color: 'white',
+                      fontSize: '12px',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      console.log('[COPY]', renderedFeature.getProperty('Longitude')?.toString())
+                      navigator.clipboard.writeText(renderedFeature.getProperty('Longitude')?.toString())
+                      setCopiedKey('Longitude')
+                      setTimeout(() => setCopiedKey(null), 1500)
+                    }}
+                    title="Скопировать"
+                  >
+                    {copiedKey === name ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+            </>
           )}
+          <Divider
+            style={{
+              backgroundColor: 'white',
+            }}
+          />
+          <strong> Percent of filling with:</strong>
+          {typeof renderedFeature.getProperty === 'function' && (
+            <>
+              {/*FIXME Buildings*/}
+              <div style={{marginTop: '8px'}}>
+              <div
+                key={renderedFeature.getProperty('pc_build3d')?.toString()}
+                style={{
+                  marginBottom: '4px',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-wrap',
+                  pointerEvents: 'auto'
+                }}
+              >
+                <strong>Buildings:</strong> {Math.floor(renderedFeature.getProperty('pc_build3d')?.toString())}{' '}%
+                {/*<button*/}
+                {/*  style={{*/}
+                {/*    marginLeft: '6px',*/}
+                {/*    cursor: 'pointer',*/}
+                {/*    backgroundColor: 'transparent',*/}
+                {/*    border: '1px solid white',*/}
+                {/*    color: 'white',*/}
+                {/*    fontSize: '12px',*/}
+                {/*    padding: '2px 6px',*/}
+                {/*    borderRadius: '4px'*/}
+                {/*  }}*/}
+                {/*  onClick={(e) => {*/}
+                {/*    e.stopPropagation()*/}
+                {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
+                {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
+                {/*    setCopiedKey('level')*/}
+                {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
+                {/*  }}*/}
+                {/*  title="Скопировать"*/}
+                {/*>*/}
+                {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
+                {/*</button>*/}
+              </div>
+            </div>
+
+              {/*FIXME Greenary*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('pc_green3d')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Greenary:</strong> {Math.floor(renderedFeature.getProperty('pc_green3d')?.toString())}{' '}%
+                  {/*<button*/}
+                  {/*  style={{*/}
+                  {/*    marginLeft: '6px',*/}
+                  {/*    cursor: 'pointer',*/}
+                  {/*    backgroundColor: 'transparent',*/}
+                  {/*    border: '1px solid white',*/}
+                  {/*    color: 'white',*/}
+                  {/*    fontSize: '12px',*/}
+                  {/*    padding: '2px 6px',*/}
+                  {/*    borderRadius: '4px'*/}
+                  {/*  }}*/}
+                  {/*  onClick={(e) => {*/}
+                  {/*    e.stopPropagation()*/}
+                  {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
+                  {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
+                  {/*    setCopiedKey('level')*/}
+                  {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
+                  {/*  }}*/}
+                  {/*  title="Скопировать"*/}
+                  {/*>*/}
+                  {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
+                  {/*</button>*/}
+                </div>
+              </div>
+
+              {/*FIXME Roads*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('pc_roads_3d')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Roads:</strong> {Math.floor(renderedFeature.getProperty('pc_roads_3d')?.toString())}{' '}%
+                  {/*<button*/}
+                  {/*  style={{*/}
+                  {/*    marginLeft: '6px',*/}
+                  {/*    cursor: 'pointer',*/}
+                  {/*    backgroundColor: 'transparent',*/}
+                  {/*    border: '1px solid white',*/}
+                  {/*    color: 'white',*/}
+                  {/*    fontSize: '12px',*/}
+                  {/*    padding: '2px 6px',*/}
+                  {/*    borderRadius: '4px'*/}
+                  {/*  }}*/}
+                  {/*  onClick={(e) => {*/}
+                  {/*    e.stopPropagation()*/}
+                  {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
+                  {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
+                  {/*    setCopiedKey('level')*/}
+                  {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
+                  {/*  }}*/}
+                  {/*  title="Скопировать"*/}
+                  {/*>*/}
+                  {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
+                  {/*</button>*/}
+                </div>
+              </div>
+            </>
+          )}
+
+          <Divider
+            style={{
+              backgroundColor: 'white',
+            }}
+          />
+
           <button
             onClick={showParentFeature}
             style={{
@@ -777,5 +1093,45 @@ const CesiumMap = () => {
     </>
   )
 }
+
+{/*{renderedFeature.getPropertyIds?.().map((name) => {*/}
+{/*  const value = renderedFeature.getProperty(name)?.toString()*/}
+
+{/*  return (*/}
+{/*    <div*/}
+{/*      key={name}*/}
+{/*      style={{*/}
+{/*        marginBottom: '4px',*/}
+{/*        wordBreak: 'break-word',*/}
+{/*        whiteSpace: 'pre-wrap',*/}
+{/*        pointerEvents: 'auto'*/}
+{/*      }}*/}
+{/*    >*/}
+{/*      <strong>{name}:</strong> {value}{' '}*/}
+{/*      <button*/}
+{/*        style={{*/}
+{/*          marginLeft: '6px',*/}
+{/*          cursor: 'pointer',*/}
+{/*          backgroundColor: 'transparent',*/}
+{/*          border: '1px solid white',*/}
+{/*          color: 'white',*/}
+{/*          fontSize: '12px',*/}
+{/*          padding: '2px 6px',*/}
+{/*          borderRadius: '4px'*/}
+{/*        }}*/}
+{/*        onClick={(e) => {*/}
+{/*          e.stopPropagation()*/}
+{/*          console.log('[COPY]', value)*/}
+{/*          navigator.clipboard.writeText(value)*/}
+{/*          setCopiedKey(name)*/}
+{/*          setTimeout(() => setCopiedKey(null), 1500)*/}
+{/*        }}*/}
+{/*        title="Скопировать"*/}
+{/*      >*/}
+{/*        {copiedKey === name ? 'Copied!' : 'Copy'}*/}
+{/*      </button>*/}
+{/*    </div>*/}
+{/*  )*/}
+{/*})}*/}
 
 export default CesiumMap

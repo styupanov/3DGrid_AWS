@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import {Modal, Button, Slider, Checkbox, Select, Input, Card} from 'antd'
+import {Modal, Button, Slider, Checkbox, Select, Input, Card, Divider} from 'antd'
 import {DownOutlined, UpOutlined} from '@ant-design/icons';
 
 const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterProps, filterProps, onUpdateFilterRanges, selectedProperty, setSelectedProperty  }) => {
@@ -19,6 +19,12 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
   }, [sliderValues])
 
   const levels = [2, 3, 4, 5]
+
+  const props_dict = {
+    pc_build3d: {label: 'Buildings', value: 'pc_build3d'},
+    pc_green3d: {label: 'Greenery', value: 'pc_green3d'},
+    pc_roads_3d: {label: 'Roads', value: 'pc_roads_3d'}
+}
 
   const handleKeyDown = (e, isParent) => {
     if (e.key === 'Enter') {
@@ -89,7 +95,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
 
   return (
     <Card
-      title="Filters"
+      title="Display properties"
       style={{
         position: 'absolute',
         top: 20,
@@ -109,7 +115,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           }}
         >
           <div style={{ marginBottom: 10 }}>
-            <strong>Levels</strong>
+            <strong>Cell size level</strong>
             <Select
               value={activeLevels[0]}
               onChange={(value) => onToggleLevel(value)}
@@ -124,18 +130,20 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           </div>
 
           <div style={{ marginTop: 10 }}>
-            <strong>Select Property</strong>
+            <strong>Property to color scheme</strong>
             <Select
               style={{ width: '100%' }}
               value={selectedProperty}
               onChange={setSelectedProperty}
               options={[
-                { label: 'pc_build3d', value: 'pc_build3d' },
-                { label: 'pc_green3d', value: 'pc_green3d' },
-                { label: 'pc_roads_3d', value: 'pc_roads_3d' }
+                { label: 'Buildings', value: 'pc_build3d' },
+                { label: 'Greenery', value: 'pc_green3d' },
+                { label: 'Roads', value: 'pc_roads_3d' }
               ]}
             />
           </div>
+
+          <Divider />
 
           <div style={{ marginBottom: 10, marginTop: 10, marginLeft: 2, marginRight: 2 }}>
             <strong style={{ marginBottom: 10, display: 'block'}} >Range for properties</strong>
@@ -148,7 +156,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
                 {/*>*/}
                 {/*  {key}*/}
                 {/*</Checkbox>*/}
-                <div>{key}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>
+                <div>{props_dict[key].label}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>
                 <Slider
                   range={{ draggableTrack: true }}
                   value={sliderValues[key]}
@@ -160,8 +168,10 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
             ))}
           </div>
 
+          <Divider />
+
           <div style={{ marginTop: 10 }}>
-            <strong>Search by ID</strong>
+            <strong>Search by Cell ID</strong>
             <Input.Search
               value={searchId}
               onChange={(e) => setSearchId(e.target.value)}
@@ -174,7 +184,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           </div>
 
           <div style={{ marginTop: 10, marginBottom: 20 }}>
-            <strong>Search by Parent ID</strong>
+            <strong>Search by Parent Cell ID</strong>
             <Input.Search
               value={searchParentId}
               onChange={(e) => setSearchParentId(e.target.value)}
