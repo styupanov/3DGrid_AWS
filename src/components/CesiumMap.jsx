@@ -37,16 +37,16 @@ const CesiumMap = () => {
   const [loading, setLoading] = useState(false)
 
   const new_colors = [
-    'rgba(0, 102, 255, 0.5)',
-    'rgba(0, 149, 255, 0.5)',
-    'rgba(71, 178, 255, 0.5)',
-    'rgba(94, 202, 239, 0.5)',
+    'rgba(0, 102, 255, 0.1)',
+    'rgba(0, 149, 255, 0.2)',
+    'rgba(71, 178, 255, 0.3)',
+    'rgba(94, 202, 239, 0.4)',
     'rgba(240, 216, 30, 0.5)',
-    'rgba(255, 188, 0, 0.5)',
-    'rgba(255, 137, 3, 0.5)',
-    'rgba(255, 84, 0, 0.5)',
-    'rgba(255, 43, 0, 0.5)',
-    'rgba(255, 0, 0, 0.7)',
+    'rgba(255, 188, 0, 0.6)',
+    'rgba(255, 137, 3, 0.7)',
+    'rgba(255, 84, 0, 0.8)',
+    'rgba(255, 43, 0, 0.9)',
+    'rgba(255, 0, 0, 1)',
   ]
 
   // const colorBySelectedProperty = (tileset) => {
@@ -145,16 +145,16 @@ const CesiumMap = () => {
     // === 2. РАСКРАСКА ===
     if (selectedProperty) {
       const colors = [
-        'color("rgba(0, 102, 255, 0.5)")',
-        'color("rgba(0, 149, 255, 0.5)")',
-        'color("rgba(71, 178, 255, 0.5)")',
-        'color("rgba(94, 202, 239, 0.5)")',
+        'color("rgba(0, 102, 255, 0.1)")',
+        'color("rgba(0, 149, 255, 0.2)")',
+        'color("rgba(71, 178, 255, 0.3)")',
+        'color("rgba(94, 202, 239, 0.4)")',
         'color("rgba(240, 216, 30, 0.5)")',
-        'color("rgba(255, 188, 0, 0.5)")',
-        'color("rgba(255, 137, 3, 0.5)")',
-        'color("rgba(255, 84, 0, 0.5)")',
-        'color("rgba(255, 43, 0, 0.5)")',
-        'color("rgba(255, 0, 0, 0.7)")',
+        'color("rgba(255, 188, 0, 0.6)")',
+        'color("rgba(255, 137, 3, 0.7)")',
+        'color("rgba(255, 84, 0, 0.8)")',
+        'color("rgba(255, 43, 0, 0.9)")',
+        'color("rgba(255, 0, 0, 1)")',
       ];
 
       const colorConditions = [];

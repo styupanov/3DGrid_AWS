@@ -31,6 +31,61 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
     setFilterProps(prev => ({ ...prev, [key]: true }))
   }
 
+  const renderLegend = () => {
+    const commonColors = [
+      'rgba(0, 102, 255, 0.1)',
+      'rgba(0, 149, 255, 0.2)',
+      'rgba(71, 178, 255, 0.3)',
+      'rgba(94, 202, 239, 0.4)',
+      'rgba(240, 216, 30, 0.5)',
+      'rgba(255, 188, 0, 0.6)',
+      'rgba(255, 137, 3, 0.7)',
+      'rgba(255, 84, 0, 0.8)',
+      'rgba(255, 43, 0, 0.9)',
+      'rgba(255, 0, 0, 10)',
+    ]
+
+    const thresholds = activeLevels[0] === 5
+      ? ['0', '0.1', '0.2', '0.5', '0.7', '1', '2', '3', '4', '5']
+      : ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90']
+
+    const labels = activeLevels[0] === 5
+      ? ['0.1', '0.2', '0.5', '0.7', '1', '2', '3', '4', '5', '6']
+      : ['10', '20', '30', '40', '50', '60', '70', '80', '90', '100+']
+
+    return (
+      <div style={{
+        position: 'fixed',
+        bottom: '50px',
+        backgroundColor: 'white',
+        width: '500px',
+        borderRadius: '8px',
+        padding: '8px 16px',
+        left: 'calc(100vw / 2 - 250px)',
+      }}>
+        <div style={{ marginBottom: 8, fontWeight: 500 }}>Цветовая шкала</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-around' }}>
+          {commonColors.map((color, index) => (
+            <div key={index} style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  width: 40,
+                  height: 10,
+                  background: color,
+                  borderRadius: 4,
+                  marginBottom: 2
+                }}
+              />
+              <div style={{ fontSize: 10 }}>
+                {thresholds[index]} – {labels[index]}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
 
   return (
     <Card
@@ -140,6 +195,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           onClick={() => setCollapsed(!collapsed)}
         />
       </div>
+      {renderLegend()}
       {/*<div style={{ marginTop: 10 }}>*/}
       {/*  <Button onClick={() => setIsModalVisible(true)}>Фильтрация</Button>*/}
       {/*</div>*/}
