@@ -25,9 +25,9 @@ const CesiumMap = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [filterProps, setFilterProps] = useState({
-    pc_build3d: false,
-    pc_green3d: false,
-    pc_roads_3d: false
+    pc_build3d: true,
+    pc_green3d: true,
+    pc_roads_3d: true
   })
   const [filterRanges, setFilterRanges] = useState({
     pc_build3d: [0, 100],
@@ -37,18 +37,14 @@ const CesiumMap = () => {
   const [selectedProperty, setSelectedProperty] = useState('pc_build3d');
   const [loading, setLoading] = useState(false)
 
-  const new_colors = [
-    'rgba(0, 102, 255, 0.1)',
-    'rgba(0, 149, 255, 0.2)',
-    'rgba(71, 178, 255, 0.3)',
-    'rgba(94, 202, 239, 0.4)',
-    'rgba(240, 216, 30, 0.5)',
-    'rgba(255, 188, 0, 0.6)',
-    'rgba(255, 137, 3, 0.7)',
-    'rgba(255, 84, 0, 0.8)',
-    'rgba(255, 43, 0, 0.9)',
-    'rgba(255, 0, 0, 1)',
-  ]
+  const getBaseColor = () => {
+    switch (selectedProperty) {
+      case 'pc_build3d': return '#67000D';
+      case 'pc_green3d': return '#006837';
+      case 'pc_roads_3d': return '#1A1A1A';
+      default: return '#000000';
+    }
+  };
 
   // const colorBySelectedProperty = (tileset) => {
   //   if (!tileset || !selectedProperty) return;
@@ -124,49 +120,55 @@ const CesiumMap = () => {
     if (!tileset) return;
 
     const style = {};
-
+    console.log(':::::BEFORE FILTERS:::::')
+    console.log('activeProps: ', activeProps)
+    console.log('filterRanges: ', filterRanges)
     // === 1. ФИЛЬТРАЦИЯ ===
     if (activeProps?.length > 0) {
+      console.log('// === 1. ФИЛЬТРАЦИЯ ===');
       const filterConditions = activeProps.map(key => {
         const [min, max] = filterRanges[key] || [0, 100];
         return `\${${key}} >= ${min} && \${${key}} <= ${max}`;
       });
       const combinedFilter = filterConditions.join(' && ');
 
-      style.show = {
-        conditions: [
-          [combinedFilter, 'true'],
-          ['true', 'false']
-        ]
-      };
+      const showConditions = [];
 
-      console.log(`[✓] Applied filter condition: ${combinedFilter}`);
+      // Добавим первым условием исключение по selectedProperty === 0
+      if (selectedProperty) {
+        showConditions.push([`\${${selectedProperty}} === 0`, 'false']);
+      }
+
+      // Основное условие фильтра
+      showConditions.push([combinedFilter, 'true']);
+      showConditions.push(['true', 'false']); // fallback
+
+      style.show = { conditions: showConditions };
+
+      console.log(`[✓] Applied filter condition: ${combinedFilter} + no zero`);
     }
-
+    console.log('Im at applyStyleToTileset, before // === 2. РАСКРАСКА ===')
     // === 2. РАСКРАСКА ===
     if (selectedProperty) {
-      const colors = [
-        'color("rgba(0, 102, 255, 0.1)")',
-        'color("rgba(0, 149, 255, 0.2)")',
-        'color("rgba(71, 178, 255, 0.3)")',
-        'color("rgba(94, 202, 239, 0.4)")',
-        'color("rgba(240, 216, 30, 0.5)")',
-        'color("rgba(255, 188, 0, 0.6)")',
-        'color("rgba(255, 137, 3, 0.7)")',
-        'color("rgba(255, 84, 0, 0.8)")',
-        'color("rgba(255, 43, 0, 0.9)")',
-        'color("rgba(255, 0, 0, 1)")',
-      ];
-
+      console.log('Im in // === 2. РАСКРАСКА ===');
+      const base = getBaseColor();
       const colorConditions = [];
+      console.log('base: ', base);
 
       for (let i = 0; i < 10; i++) {
         const min = i * 10;
         const max = i === 9 ? 10000000 : (i + 1) * 10;
-        colorConditions.push([`\${${selectedProperty}} >= ${min} && \${${selectedProperty}} < ${max}`, colors[i]]);
+        const opacity = (0.05 + i * 0.1).toFixed(2); // от 0.05 до 0.95
+        const hexOpacity = Math.round(opacity * 255).toString(16).padStart(2, '0');
+        const colorStr = `color("${base}${hexOpacity}")`;
+
+        colorConditions.push([
+          `\${${selectedProperty}} >= ${min} && \${${selectedProperty}} < ${max}`,
+          colorStr
+        ]);
       }
 
-      colorConditions.push(['true', 'color("white")']);
+      colorConditions.push(['true', `color("${base}00")`]); // fallback: 0 прозрачность
 
       style.color = { conditions: colorConditions };
 
@@ -174,6 +176,7 @@ const CesiumMap = () => {
     }
 
     tileset.style = new Cesium.Cesium3DTileStyle(style);
+    console.log(tileset.style)
   };
 
   // const applyFeatureFilter = (tileset) => {
@@ -446,6 +449,10 @@ const CesiumMap = () => {
       console.log('%c[✓] Picked Feature:', 'color: cyan', pickedFeature)
       // debugger
       // Сброс цвета предыдущей фичи
+      console.log('Feature properties:');
+      pickedFeature.getPropertyIds?.().forEach((name) => {
+        console.log(`${name} – ${pickedFeature.getProperty(name)}`);
+      });
       if (selectedFeatureRef.current && typeof selectedFeatureRef.current.color !== 'undefined') {
         try {
           selectedFeatureRef.current.color = Color.WHITE
@@ -543,7 +550,7 @@ const CesiumMap = () => {
             setSelectedCellId(null)
             setSelectedCellLevel(null)
           }
-          setFilterProps({ pc_build3d: false, pc_green3d: false, pc_roads_3d: false })
+          setFilterProps({ pc_build3d: true, pc_green3d: true, pc_roads_3d: true })
           setSelectedLevel(level)
           loadTileset(level)
         }}
