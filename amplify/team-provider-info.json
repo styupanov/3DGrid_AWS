@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-3dgridaws-dev-151c5-authRole",
+      "UnauthRoleArn": "arn:aws:iam::866903882836:role/amplify-3dgridaws-dev-151c5-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::866903882836:role/amplify-3dgridaws-dev-151c5-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-3dgridaws-dev-151c5-deployment",
+      "UnauthRoleName": "amplify-3dgridaws-dev-151c5-unauthRole",
+      "StackName": "amplify-3dgridaws-dev-151c5",
+      "StackId": "arn:aws:cloudformation:eu-north-1:866903882836:stack/amplify-3dgridaws-dev-151c5/df44c2f0-51a3-11f0-8e68-0a381d3b4c43",
+      "AmplifyAppId": "d3bz1pb875q3k6"
+    },
+    "categories": {
+      "auth": {
+        "3dgridaws0dace36e": {}
+      }
+    }
+  }
+}

@@ -9,13 +9,25 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
+    "@aws-amplify/ui-react": "^6.11.2",
+    "amplify": "^0.0.11",
     "antd": "^5.26.0",
+    "aws-amplify": "^6.15.1",
     "cesium": "^1.112.0",
+    "oidc-client-ts": "^3.3.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-oidc-context": "^3.3.0"
   },
   "devDependencies": {
+    "@aws-amplify/backend": "^1.16.1",
+    "@aws-amplify/backend-cli": "^1.8.0",
     "@vitejs/plugin-react": "^4.0.0",
+    "aws-cdk-lib": "^2.189.1",
+    "constructs": "^10.4.2",
+    "esbuild": "^0.25.5",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
     "vite": "^4.4.0"
   }
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import {Modal, Button, Slider, Checkbox, Select, Input, Card, Divider} from 'antd'
 import {DownOutlined, UpOutlined} from '@ant-design/icons';
+import { useAuthenticator } from '@aws-amplify/ui-react';
 
 const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterProps, filterProps, onUpdateFilterRanges, selectedProperty, setSelectedProperty  }) => {
   const [searchId, setSearchId] = useState('')
@@ -13,6 +14,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
   })
   const [selectedProp, setSelectedProp] = useState('pc_build3d')
   const [collapsed, setCollapsed] = useState(false)
+  const { user, signOut } = useAuthenticator((context) => [context.user]);
 
   useEffect(() => {
     onUpdateFilterRanges(sliderValues)
@@ -162,7 +164,9 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
   const levelMax = activeLevels[0] === 5 ? 0.01 : activeLevels[0] === 4 ? 1 : 10;
 
   const { min, max, step } = getLevelConfig(activeLevels[0]);
-
+  // if(user){
+  //   debugger
+  // }
 
   return (
     <Card
@@ -178,6 +182,10 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
         padding: 8
       }}
     >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div style={{ fontSize: 12 }}>Signed in as <strong>{user?.signInDetails?.loginId}</strong></div>
+        <Button type="link" size="small" onClick={signOut}>Sign out</Button>
+      </div>
         <div
           style={{
             maxHeight: collapsed ? 0 : 1000,
