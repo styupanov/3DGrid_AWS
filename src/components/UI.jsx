@@ -117,6 +117,19 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
     //     ? ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1']
     //     : ['10', '20', '30', '40', '50', '60', '70', '80', '90', '100+'];
 
+    const colors = [
+      'rgba(0, 102, 255, 0.05)',
+      'rgba(0, 149, 255, 0.2)',
+      'rgba(71, 178, 255, 0.3)',
+      'rgba(94, 202, 239, 0.4)',
+      'rgba(240, 216, 30, 0.5)',
+      'rgba(255, 188, 0, 0.6)',
+      'rgba(255, 137, 3, 0.7)',
+      'rgba(255, 84, 0, 0.8)',
+      'rgba(255, 43, 0, 0.9)',
+      'rgba(255, 0, 0, 1)'
+    ];
+
     const { thresholds, labels } = getLevelConfig(activeLevels[0])
 
 
@@ -131,9 +144,11 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
         padding: '8px 16px',
         left: 'calc(100vw / 2 - 400px)',
       }}>
-        <div style={{ marginBottom: 8, fontWeight: 500 }}>{props_dict[selectedProperty]?.label || selectedProperty} to color scheme</div>
+        <div style={{ marginBottom: 8, fontWeight: 500 }}>
+          {props_dict[selectedProperty]?.label || selectedProperty} to color scheme
+        </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-around' }}>
-          {commonColors.map((color, index) => (
+          {colors.map((color, index) => (
             <div key={index} style={{
               textAlign: 'center',
               minWidth: '75px',

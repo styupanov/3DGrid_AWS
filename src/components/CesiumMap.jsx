@@ -151,28 +151,36 @@ const CesiumMap = () => {
     // === 2. РАСКРАСКА ===
     if (selectedProperty) {
       console.log('Im in // === 2. РАСКРАСКА ===');
-      const base = getBaseColor();
+
+      const colors = [
+        'color("rgba(0, 102, 255, 0.05)")',
+        'color("rgba(0, 149, 255, 0.2)")',
+        'color("rgba(71, 178, 255, 0.3)")',
+        'color("rgba(94, 202, 239, 0.4)")',
+        'color("rgba(240, 216, 30, 0.5)")',
+        'color("rgba(255, 188, 0, 0.6)")',
+        'color("rgba(255, 137, 3, 0.7)")',
+        'color("rgba(255, 84, 0, 0.8)")',
+        'color("rgba(255, 43, 0, 0.9)")',
+        'color("rgba(255, 0, 0, 1)")',
+      ];
+
       const colorConditions = [];
-      console.log('base: ', base);
 
       for (let i = 0; i < 10; i++) {
         const min = i * 10;
         const max = i === 9 ? 10000000 : (i + 1) * 10;
-        const opacity = (0.05 + i * 0.1).toFixed(2); // от 0.05 до 0.95
-        const hexOpacity = Math.round(opacity * 255).toString(16).padStart(2, '0');
-        const colorStr = `color("${base}${hexOpacity}")`;
-
         colorConditions.push([
           `\${${selectedProperty}} >= ${min} && \${${selectedProperty}} < ${max}`,
-          colorStr
+          colors[i]
         ]);
       }
 
-      colorConditions.push(['true', `color("${base}00")`]); // fallback: 0 прозрачность
+      colorConditions.push(['true', 'color("rgba(0,0,0,0)")']); // fallback: полностью прозрачный
 
       style.color = { conditions: colorConditions };
 
-      console.log(`[✓] Applied color by ${selectedProperty}`);
+      console.log(`[✓] Applied fixed color scheme by ${selectedProperty}`);
     }
 
     tileset.style = new Cesium.Cesium3DTileStyle(style);
