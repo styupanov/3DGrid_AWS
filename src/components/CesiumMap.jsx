@@ -475,7 +475,7 @@ const CesiumMap = () => {
         setRenderedFeature(pickedFeature)
         setSelectedCellId(pickedFeature.getProperty('cell_id'))
         setSelectedCellLevel(pickedFeature.getProperty('level'))
-        setPopupPosition({ x: movement.position.x, y: movement.position.y })
+        setPopupPosition({ x: 450, y: 20 })
       } else {
         setSelectedCellId(null)
         setSelectedCellLevel(null)
@@ -577,7 +577,7 @@ const CesiumMap = () => {
             position: 'absolute',
             top: `${popupPosition.y}px`,
             left: `${popupPosition.x}px`,
-            transform: 'translate(-50%, -100%)',
+            // transform: 'translate(-50%, -100%)',
             backgroundColor: 'rgba(0, 0, 50, 0.85)',
             color: 'white',
             padding: '12px',
