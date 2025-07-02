@@ -875,7 +875,11 @@ const CesiumMap = () => {
                   pointerEvents: 'auto'
                 }}
               >
-                <strong>Buildings:</strong> {Math.floor(renderedFeature.getProperty('pc_build3d')?.toString())}{' '}%
+                <strong>Buildings:</strong> {
+                selectedLevel === 4 || 5 ?
+                  renderedFeature.getProperty('pc_build3d')?.toString() + ' ' + '%'
+                : Math.floor(renderedFeature.getProperty('pc_build3d')?.toString())+ ' ' + '%'
+                }
                 {/*<button*/}
                 {/*  style={{*/}
                 {/*    marginLeft: '6px',*/}
