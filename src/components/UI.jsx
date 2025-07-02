@@ -15,12 +15,10 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
   const [selectedProp, setSelectedProp] = useState('pc_build3d')
   const [collapsed, setCollapsed] = useState(false)
   const { user, signOut } = useAuthenticator((context) => [context.user]);
-
-  useEffect(() => {
-    onUpdateFilterRanges(sliderValues)
-  }, [sliderValues])
-
-
+  const handleSliderChange = (key, value) => {
+    setSliderValues(prev => ({ ...prev, [key]: value }))
+    setFilterProps(prev => ({ ...prev, [key]: true }))
+  }
 
   const levels = [2, 3, 4, 5]
 
@@ -28,21 +26,18 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
     pc_build3d: {label: 'Buildings', value: 'pc_build3d'},
     pc_green3d: {label: 'Greenery', value: 'pc_green3d'},
     pc_roads_3d: {label: 'Roads', value: 'pc_roads_3d'}
-}
-
-  const handleKeyDown = (e, isParent) => {
-    if (e.key === 'Enter') {
-      onSearch(isParent ? searchParentId : searchId, isParent)
-    }
-  }
-
-  const handleSliderChange = (key, value) => {
-    setSliderValues(prev => ({ ...prev, [key]: value }))
-    setFilterProps(prev => ({ ...prev, [key]: true }))
   }
 
   const getLevelConfig = (level) => {
     switch (level) {
+      case 5:
+        return {
+          min: 0,
+          max: 0.022,
+          step: 0.0001,
+          thresholds: ['0', '0.0001', '0.0002', '0.0004', '0.0005', '0.0007', '0.0011', '0.0013', '0.0015', '0.0019', '0.022'],
+          labels: ['0.0001', '0.0002', '0.0004', '0.0005', '0.0007', '0.0011', '0.0013', '0.0015', '0.0019', '0.0022']
+        }
       case 4:
         return {
           min: 0,
@@ -50,14 +45,6 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           step: 0.1,
           thresholds: ['0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1'],
           labels: ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1']
-        }
-      case 5:
-        return {
-          min: 0,
-          max: 0.01,
-          step: 0.001,
-          thresholds: ['0', '0.001', '0.002', '0.003', '0.004', '0.005', '0.006', '0.007', '0.008', '0.009'],
-          labels: ['0.001', '0.002', '0.003', '0.004', '0.005', '0.006', '0.007', '0.008', '0.009', '0.01']
         }
       case 2:
       case 3:
@@ -74,21 +61,17 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
 
   useEffect(() => {
     const { min, max } = getLevelConfig(activeLevels[0]);
+    const updated = {
+      pc_build3d: [min, max],
+      pc_green3d: [min, max],
+      pc_roads_3d: [min, max]
+    };
+    setSliderValues(updated);
+  }, [activeLevels[0]]);
 
-    // Проверка: если текущие значения не входят в границы нового уровня, то сбрасываем
-    const needsReset = Object.entries(sliderValues).some(([key, [curMin, curMax]]) =>
-      curMin < min || curMax > max
-    );
-
-    if (needsReset) {
-      const updated = {
-        pc_build3d: [min, max],
-        pc_green3d: [min, max],
-        pc_roads_3d: [min, max]
-      };
-      setSliderValues(updated);
-    }
-  }, [activeLevels]);
+  useEffect(() => {
+    onUpdateFilterRanges(sliderValues);
+  }, [sliderValues, onUpdateFilterRanges]);
 
 
   const renderLegend = () => {
@@ -139,7 +122,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
         position: 'fixed',
         bottom: '10px',
         backgroundColor: 'white',
-        width: '800px',
+        width: '1000px',
         borderRadius: '8px',
         padding: '8px 16px',
         left: 'calc(100vw / 2 - 400px)',
