@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import {Modal, Button, Slider, Checkbox, Select, Input, Card, Divider} from 'antd'
+import {Modal, Button, Slider, Checkbox, Select, Input, Card, Divider, ConfigProvider} from 'antd'
 import {DownOutlined, UpOutlined} from '@ant-design/icons';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 
@@ -137,7 +137,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
     return (
       <div style={{
         position: 'fixed',
-        bottom: '50px',
+        bottom: '10px',
         backgroundColor: 'white',
         width: '800px',
         borderRadius: '8px',
@@ -184,175 +184,184 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
   // }
 
   return (
-    <Card
-      title="Display properties"
-      style={{
-        position: 'absolute',
-        top: 20,
-        left: 20,
-        zIndex: 999,
-        minWidth: 260,
-        borderRadius: 8,
-        boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
-        padding: 8
+    <ConfigProvider
+      theme={{
+        components: {
+          Card: {
+            bodyPadding:'12px'
+          },
+        },
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <div style={{ fontSize: 12 }}>Signed in as <strong>{user?.signInDetails?.loginId}</strong></div>
-        <Button type="link" size="small" onClick={signOut}>Sign out</Button>
-      </div>
-        <div
-          style={{
-            maxHeight: collapsed ? 0 : 1000,
-            overflow: 'hidden',
-            transition: 'max-height 0.3s ease-in-out',
-          }}
-        >
-          <div style={{ marginBottom: 10 }}>
-            <strong>Cell size level</strong>
-            <Select
-              value={activeLevels[0]}
-              onChange={(value) => onToggleLevel(value)}
-              style={{ width: '100%', marginTop: 5 }}
-            >
-              {levels.map((level) => (
-                <Option key={level} value={level}>
-                  Level {level}
-                </Option>
+      <Card
+        title="Display properties"
+        style={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          zIndex: 999,
+          minWidth: 260,
+          borderRadius: 8,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ fontSize: 12 }}>Signed in as <strong>{user?.signInDetails?.loginId}</strong></div>
+          <Button type="link" size="small" onClick={signOut}>Sign out</Button>
+        </div>
+          <div
+            style={{
+              maxHeight: collapsed ? 0 : 1000,
+              overflow: 'hidden',
+              transition: 'max-height 0.3s ease-in-out',
+            }}
+          >
+            <div style={{ marginBottom: 10 }}>
+              <strong>Cell size level</strong>
+              <Select
+                value={activeLevels[0]}
+                onChange={(value) => onToggleLevel(value)}
+                style={{ width: '100%', marginTop: 5 }}
+              >
+                {levels.map((level) => (
+                  <Option key={level} value={level}>
+                    Level {level}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <strong>Property to color scheme</strong>
+              <Select
+                style={{ width: '100%' }}
+                value={selectedProperty}
+                onChange={setSelectedProperty}
+                options={[
+                  { label: 'Buildings', value: 'pc_build3d' },
+                  { label: 'Greenery', value: 'pc_green3d' },
+                  { label: 'Roads', value: 'pc_roads_3d' }
+                ]}
+              />
+            </div>
+
+            <Divider style={{margin: '10px 0'}}/>
+
+            <div style={{ marginBottom: 10, marginTop: 10, marginLeft: 2, marginRight: 2 }}>
+              <strong style={{ marginBottom: 10, display: 'block'}} >Range for properties</strong>
+              {Object.keys(sliderValues).map((key) => (
+                <div key={key}>
+
+                  {/*<Checkbox*/}
+                  {/*  checked={filterProps[key]}*/}
+                  {/*  onChange={(e) => setFilterProps(prev => ({ ...prev, [key]: e.target.checked }))}*/}
+                  {/*>*/}
+                  {/*  {key}*/}
+                  {/*</Checkbox>*/}
+                  <div>{props_dict[key].label}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>
+                  <Slider
+                    range={{ draggableTrack: true }}
+                    value={sliderValues[key]}
+                    onChange={(value) => handleSliderChange(key, value)}
+                    min={min}
+                    max={max}
+                    step={step}
+                  />
+                </div>
               ))}
-            </Select>
-          </div>
+            </div>
 
-          <div style={{ marginTop: 10 }}>
-            <strong>Property to color scheme</strong>
-            <Select
-              style={{ width: '100%' }}
-              value={selectedProperty}
-              onChange={setSelectedProperty}
-              options={[
-                { label: 'Buildings', value: 'pc_build3d' },
-                { label: 'Greenery', value: 'pc_green3d' },
-                { label: 'Roads', value: 'pc_roads_3d' }
-              ]}
-            />
-          </div>
+            <Divider style={{margin: '10px 0'}}/>
 
-          <Divider />
+            <div style={{ marginTop: 10 }}>
+              <strong>Search by Cell ID</strong>
+              <Input.Search
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                onSearch={() => onSearch(searchId)}
+                onKeyDown={(e) => handleKeyDown(e, false)}
+                placeholder="Enter ID..."
+                enterButton
+                style={{ marginTop: 5 }}
+              />
+            </div>
 
-          <div style={{ marginBottom: 10, marginTop: 10, marginLeft: 2, marginRight: 2 }}>
-            <strong style={{ marginBottom: 10, display: 'block'}} >Range for properties</strong>
-            {Object.keys(sliderValues).map((key) => (
-              <div key={key} style={{ marginBottom: 20 }}>
+            <div style={{ marginTop: 10, marginBottom: 20 }}>
+              <strong>Search by Parent Cell ID</strong>
+              <Input.Search
+                value={searchParentId}
+                onChange={(e) => setSearchParentId(e.target.value)}
+                onSearch={() => onSearch(searchParentId, true)}
+                onKeyDown={(e) => handleKeyDown(e, true)}
+                placeholder="Enter Parent ID..."
+                enterButton
+                style={{ marginTop: 5 }}
+              />
+            </div>
 
-                {/*<Checkbox*/}
-                {/*  checked={filterProps[key]}*/}
-                {/*  onChange={(e) => setFilterProps(prev => ({ ...prev, [key]: e.target.checked }))}*/}
-                {/*>*/}
-                {/*  {key}*/}
-                {/*</Checkbox>*/}
-                <div>{props_dict[key].label}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>
-                <Slider
-                  range={{ draggableTrack: true }}
-                  value={sliderValues[key]}
-                  onChange={(value) => handleSliderChange(key, value)}
-                  min={min}
-                  max={max}
-                  step={step}
-                />
-              </div>
-            ))}
-          </div>
+        </div>
 
-          <Divider />
+        <div style={{ textAlign: 'center', marginTop: 0 }}>
+          <Button
+            type="text"
+            icon={collapsed ? <DownOutlined /> : <UpOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+          />
+        </div>
+        {renderLegend()}
+        {/*<div style={{ marginTop: 10 }}>*/}
+        {/*  <Button onClick={() => setIsModalVisible(true)}>Фильтрация</Button>*/}
+        {/*</div>*/}
 
-          <div style={{ marginTop: 10 }}>
-            <strong>Search by Cell ID</strong>
-            <Input.Search
-              value={searchId}
-              onChange={(e) => setSearchId(e.target.value)}
-              onSearch={() => onSearch(searchId)}
-              onKeyDown={(e) => handleKeyDown(e, false)}
-              placeholder="Enter ID..."
-              enterButton
-              style={{ marginTop: 5 }}
-            />
-          </div>
+        {/*<div*/}
+        {/*  style={{*/}
+        {/*    position: 'absolute',*/}
+        {/*    left: 280,*/}
+        {/*    top: 20,*/}
+        {/*    background: 'white',*/}
+        {/*    border: '1px solid #ccc',*/}
+        {/*    borderRadius: 8,*/}
+        {/*    padding: 20,*/}
+        {/*    zIndex: 1000,*/}
+        {/*    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',*/}
+        {/*    width: 300,*/}
+        {/*    display: isModalVisible ? 'block' : 'none',*/}
+        {/*  }}*/}
+        {/*>*/}
+        {/*  <div style={{ marginTop: 10, marginBottom: 20 }}>*/}
+        {/*    <strong>Search by Parent ID</strong>*/}
+        {/*    <div>*/}
+        {/*      <input*/}
+        {/*        value={searchParentId}*/}
+        {/*        onChange={(e) => setSearchParentId(e.target.value)}*/}
+        {/*        onKeyDown={(e) => handleKeyDown(e, true)}*/}
+        {/*        placeholder="Enter Parent ID..."*/}
+        {/*      />*/}
+        {/*      <button onClick={() => onSearch(searchParentId, true)}>Search</button>*/}
+        {/*    </div>*/}
+        {/*  </div>*/}
+        {/*  {Object.keys(sliderValues).map((key) => (*/}
+        {/*    <div key={key} style={{ marginBottom: 20 }}>*/}
 
-          <div style={{ marginTop: 10, marginBottom: 20 }}>
-            <strong>Search by Parent Cell ID</strong>
-            <Input.Search
-              value={searchParentId}
-              onChange={(e) => setSearchParentId(e.target.value)}
-              onSearch={() => onSearch(searchParentId, true)}
-              onKeyDown={(e) => handleKeyDown(e, true)}
-              placeholder="Enter Parent ID..."
-              enterButton
-              style={{ marginTop: 5 }}
-            />
-          </div>
-
-      </div>
-
-      <div style={{ textAlign: 'center', marginTop: collapsed ? 0 : 16 }}>
-        <Button
-          type="text"
-          icon={collapsed ? <DownOutlined /> : <UpOutlined />}
-          onClick={() => setCollapsed(!collapsed)}
-        />
-      </div>
-      {renderLegend()}
-      {/*<div style={{ marginTop: 10 }}>*/}
-      {/*  <Button onClick={() => setIsModalVisible(true)}>Фильтрация</Button>*/}
-      {/*</div>*/}
-
-      {/*<div*/}
-      {/*  style={{*/}
-      {/*    position: 'absolute',*/}
-      {/*    left: 280,*/}
-      {/*    top: 20,*/}
-      {/*    background: 'white',*/}
-      {/*    border: '1px solid #ccc',*/}
-      {/*    borderRadius: 8,*/}
-      {/*    padding: 20,*/}
-      {/*    zIndex: 1000,*/}
-      {/*    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',*/}
-      {/*    width: 300,*/}
-      {/*    display: isModalVisible ? 'block' : 'none',*/}
-      {/*  }}*/}
-      {/*>*/}
-      {/*  <div style={{ marginTop: 10, marginBottom: 20 }}>*/}
-      {/*    <strong>Search by Parent ID</strong>*/}
-      {/*    <div>*/}
-      {/*      <input*/}
-      {/*        value={searchParentId}*/}
-      {/*        onChange={(e) => setSearchParentId(e.target.value)}*/}
-      {/*        onKeyDown={(e) => handleKeyDown(e, true)}*/}
-      {/*        placeholder="Enter Parent ID..."*/}
-      {/*      />*/}
-      {/*      <button onClick={() => onSearch(searchParentId, true)}>Search</button>*/}
-      {/*    </div>*/}
-      {/*  </div>*/}
-      {/*  {Object.keys(sliderValues).map((key) => (*/}
-      {/*    <div key={key} style={{ marginBottom: 20 }}>*/}
-
-      {/*      /!*<Checkbox*!/*/}
-      {/*      /!*  checked={filterProps[key]}*!/*/}
-      {/*      /!*  onChange={(e) => setFilterProps(prev => ({ ...prev, [key]: e.target.checked }))}*!/*/}
-      {/*      /!*>*!/*/}
-      {/*      /!*  {key}*!/*/}
-      {/*      /!*</Checkbox>*!/*/}
-      {/*      <div>{key}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>*/}
-      {/*      <Slider*/}
-      {/*        range={{ draggableTrack: true }}*/}
-      {/*        value={sliderValues[key]}*/}
-      {/*        onChange={(value) => handleSliderChange(key, value)}*/}
-      {/*        min={0}*/}
-      {/*        max={100}*/}
-      {/*      />*/}
-      {/*    </div>*/}
-      {/*  ))}*/}
-      {/*</div>*/}
-    </Card>
+        {/*      /!*<Checkbox*!/*/}
+        {/*      /!*  checked={filterProps[key]}*!/*/}
+        {/*      /!*  onChange={(e) => setFilterProps(prev => ({ ...prev, [key]: e.target.checked }))}*!/*/}
+        {/*      /!*>*!/*/}
+        {/*      /!*  {key}*!/*/}
+        {/*      /!*</Checkbox>*!/*/}
+        {/*      <div>{key}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>*/}
+        {/*      <Slider*/}
+        {/*        range={{ draggableTrack: true }}*/}
+        {/*        value={sliderValues[key]}*/}
+        {/*        onChange={(value) => handleSliderChange(key, value)}*/}
+        {/*        min={0}*/}
+        {/*        max={100}*/}
+        {/*      />*/}
+        {/*    </div>*/}
+        {/*  ))}*/}
+        {/*</div>*/}
+      </Card>
+    </ConfigProvider>
   )
 }
 
