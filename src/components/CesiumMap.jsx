@@ -11,6 +11,7 @@ import {
 import { useState, useEffect, useRef } from 'react'
 import UI from './UI'
 import {Divider} from 'antd';
+import {getLevelConfig} from '@/components/utils';
 
 const CesiumMap = () => {
   const viewerRef = useRef()
@@ -165,18 +166,21 @@ const CesiumMap = () => {
         'color("rgba(255, 0, 0, 1)")',
       ];
 
+      const levelConfig = getLevelConfig([selectedLevel][0]);
+      const { thresholds } = levelConfig;
+
       const colorConditions = [];
 
-      for (let i = 0; i < 10; i++) {
-        const min = i * 10;
-        const max = i === 9 ? 10000000 : (i + 1) * 10;
+      for (let i = 0; i < thresholds.length - 1; i++) {
+        const min = thresholds[i];
+        const max = thresholds[i + 1];
         colorConditions.push([
           `\${${selectedProperty}} >= ${min} && \${${selectedProperty}} < ${max}`,
           colors[i]
         ]);
       }
 
-      colorConditions.push(['true', 'color("rgba(0,0,0,0)")']); // fallback: полностью прозрачный
+      colorConditions.push(['true', 'color("rgba(0,0,0,0)")']); // fallback
 
       style.color = { conditions: colorConditions };
 
@@ -573,6 +577,7 @@ const CesiumMap = () => {
       />
       {renderedFeature && (
         <div
+          className={'scrollable-content'}
           style={{
             position: 'absolute',
             top: `${popupPosition.y}px`,
@@ -585,7 +590,9 @@ const CesiumMap = () => {
             zIndex: 1000,
             boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
             maxWidth: '300px',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            maxHeight: 'calc(113px + 63vh)',
+            overflow: 'scroll',
           }}
         >
           <div
@@ -875,11 +882,7 @@ const CesiumMap = () => {
                   pointerEvents: 'auto'
                 }}
               >
-                <strong>Buildings:</strong> {
-                selectedLevel === 4 || 5 ?
-                  renderedFeature.getProperty('pc_build3d')?.toString() + ' ' + '%'
-                : Math.floor(renderedFeature.getProperty('pc_build3d')?.toString())+ ' ' + '%'
-                }
+                <strong>Buildings:</strong> {renderedFeature.getProperty('pc_build3d')?.toString() + ' ' + '%'}
                 {/*<button*/}
                 {/*  style={{*/}
                 {/*    marginLeft: '6px',*/}
@@ -916,7 +919,7 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Greenary:</strong> {Math.floor(renderedFeature.getProperty('pc_green3d')?.toString())}{' '}%
+                  <strong>Greenary:</strong>{renderedFeature.getProperty('pc_green3d')?.toString() + ' ' + '%'}
                   {/*<button*/}
                   {/*  style={{*/}
                   {/*    marginLeft: '6px',*/}
@@ -953,7 +956,7 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Roads:</strong> {Math.floor(renderedFeature.getProperty('pc_roads_3d')?.toString())}{' '}%
+                  <strong>Roads:</strong>{renderedFeature.getProperty('pc_roads_3d')?.toString() + ' ' + '%'}
                   {/*<button*/}
                   {/*  style={{*/}
                   {/*    marginLeft: '6px',*/}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import {Modal, Button, Slider, Checkbox, Select, Input, Card, Divider, ConfigProvider} from 'antd'
 import {DownOutlined, UpOutlined} from '@ant-design/icons';
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import {getLevelConfig} from '@/components/utils';
 
 const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterProps, filterProps, onUpdateFilterRanges, selectedProperty, setSelectedProperty  }) => {
   const [searchId, setSearchId] = useState('')
@@ -28,36 +29,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
     pc_roads_3d: {label: 'Roads', value: 'pc_roads_3d'}
   }
 
-  const getLevelConfig = (level) => {
-    switch (level) {
-      case 5:
-        return {
-          min: 0,
-          max: 0.022,
-          step: 0.0001,
-          thresholds: ['0', '0.0001', '0.0002', '0.0004', '0.0005', '0.0007', '0.0011', '0.0013', '0.0015', '0.0019', '0.022'],
-          labels: ['0.0001', '0.0002', '0.0004', '0.0005', '0.0007', '0.0011', '0.0013', '0.0015', '0.0019', '0.0022']
-        }
-      case 4:
-        return {
-          min: 0,
-          max: 1,
-          step: 0.1,
-          thresholds: ['0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1'],
-          labels: ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1']
-        }
-      case 2:
-      case 3:
-      default:
-        return {
-          min: 0,
-          max: 100,
-          step: 1,
-          thresholds: ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90'],
-          labels: ['10', '20', '30', '40', '50', '60', '70', '80', '90', '100+']
-        }
-    }
-  }
+
 
   useEffect(() => {
     const { min, max } = getLevelConfig(activeLevels[0]);
@@ -185,13 +157,18 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           zIndex: 999,
           minWidth: 260,
           borderRadius: 8,
-          boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontSize: 12 }}>Signed in as <strong>{user?.signInDetails?.loginId}</strong></div>
-          <Button type="link" size="small" onClick={signOut}>Sign out</Button>
-        </div>
+        <div
+          className={'scrollable-content'}
+          style={{
+          maxHeight: '63vh',
+          overflow: 'scroll',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <div style={{ fontSize: 12 }}>Signed in as <strong>{user?.signInDetails?.loginId}</strong></div>
+            <Button type="link" size="small" onClick={signOut}>Sign out</Button>
+          </div>
           <div
             style={{
               maxHeight: collapsed ? 0 : 1000,
@@ -234,13 +211,6 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
               <strong style={{ marginBottom: 10, display: 'block'}} >Range for properties</strong>
               {Object.keys(sliderValues).map((key) => (
                 <div key={key}>
-
-                  {/*<Checkbox*/}
-                  {/*  checked={filterProps[key]}*/}
-                  {/*  onChange={(e) => setFilterProps(prev => ({ ...prev, [key]: e.target.checked }))}*/}
-                  {/*>*/}
-                  {/*  {key}*/}
-                  {/*</Checkbox>*/}
                   <div>{props_dict[key].label}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>
                   <Slider
                     range={{ draggableTrack: true }}
@@ -282,8 +252,8 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
               />
             </div>
 
+          </div>
         </div>
-
         <div style={{ textAlign: 'center', marginTop: 0 }}>
           <Button
             type="text"
@@ -292,57 +262,6 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           />
         </div>
         {renderLegend()}
-        {/*<div style={{ marginTop: 10 }}>*/}
-        {/*  <Button onClick={() => setIsModalVisible(true)}>Фильтрация</Button>*/}
-        {/*</div>*/}
-
-        {/*<div*/}
-        {/*  style={{*/}
-        {/*    position: 'absolute',*/}
-        {/*    left: 280,*/}
-        {/*    top: 20,*/}
-        {/*    background: 'white',*/}
-        {/*    border: '1px solid #ccc',*/}
-        {/*    borderRadius: 8,*/}
-        {/*    padding: 20,*/}
-        {/*    zIndex: 1000,*/}
-        {/*    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',*/}
-        {/*    width: 300,*/}
-        {/*    display: isModalVisible ? 'block' : 'none',*/}
-        {/*  }}*/}
-        {/*>*/}
-        {/*  <div style={{ marginTop: 10, marginBottom: 20 }}>*/}
-        {/*    <strong>Search by Parent ID</strong>*/}
-        {/*    <div>*/}
-        {/*      <input*/}
-        {/*        value={searchParentId}*/}
-        {/*        onChange={(e) => setSearchParentId(e.target.value)}*/}
-        {/*        onKeyDown={(e) => handleKeyDown(e, true)}*/}
-        {/*        placeholder="Enter Parent ID..."*/}
-        {/*      />*/}
-        {/*      <button onClick={() => onSearch(searchParentId, true)}>Search</button>*/}
-        {/*    </div>*/}
-        {/*  </div>*/}
-        {/*  {Object.keys(sliderValues).map((key) => (*/}
-        {/*    <div key={key} style={{ marginBottom: 20 }}>*/}
-
-        {/*      /!*<Checkbox*!/*/}
-        {/*      /!*  checked={filterProps[key]}*!/*/}
-        {/*      /!*  onChange={(e) => setFilterProps(prev => ({ ...prev, [key]: e.target.checked }))}*!/*/}
-        {/*      /!*>*!/*/}
-        {/*      /!*  {key}*!/*/}
-        {/*      /!*</Checkbox>*!/*/}
-        {/*      <div>{key}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>*/}
-        {/*      <Slider*/}
-        {/*        range={{ draggableTrack: true }}*/}
-        {/*        value={sliderValues[key]}*/}
-        {/*        onChange={(value) => handleSliderChange(key, value)}*/}
-        {/*        min={0}*/}
-        {/*        max={100}*/}
-        {/*      />*/}
-        {/*    </div>*/}
-        {/*  ))}*/}
-        {/*</div>*/}
       </Card>
     </ConfigProvider>
   )
