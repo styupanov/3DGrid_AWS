@@ -7,4 +7,12 @@ body,
     height: 100%;
     overflow: hidden;
     font-family: sans-serif;
+
+    .cesium-viewer-toolbar .cesium-button {
+        display: none !important;
+    }
+
+    .cesium-sceneModePicker-wrapper {
+        display: none !important;
+    }
 }
