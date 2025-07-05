@@ -479,7 +479,7 @@ const CesiumMap = () => {
         setRenderedFeature(pickedFeature)
         setSelectedCellId(pickedFeature.getProperty('cell_id'))
         setSelectedCellLevel(pickedFeature.getProperty('level'))
-        setPopupPosition({ x: 450, y: 20 })
+        setPopupPosition({ x: 350, y: 20 })
       } else {
         setSelectedCellId(null)
         setSelectedCellLevel(null)
@@ -1003,7 +1003,7 @@ const CesiumMap = () => {
               pointerEvents: 'auto'
             }}
           >
-            Показать родительские айтемы
+            Show parent items
           </button>
           <button
             onClick={async () => {
@@ -1041,7 +1041,7 @@ const CesiumMap = () => {
               opacity: renderedFeature?.getProperty('cell_id') === selectedCellId ? 0.6 : 1
             }}
           >
-            Вернуться в первоначальный айтем
+            Back to first one item
           </button>
           <button
             onClick={() => {
@@ -1108,7 +1108,7 @@ const CesiumMap = () => {
               pointerEvents: 'auto'
             }}
           >
-            Показать дочерние айтемы
+            Show children items
           </button>
         </div>
       )}

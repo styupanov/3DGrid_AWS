@@ -8,6 +8,10 @@ body,
     overflow: hidden;
     font-family: sans-serif;
 
+    .cesium-viewer-toolbar {
+        display: none !important;
+    }
+
     .cesium-viewer-toolbar .cesium-button {
         display: none !important;
     }

@@ -94,19 +94,20 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
         position: 'fixed',
         bottom: '10px',
         backgroundColor: 'white',
-        width: '1000px',
+        width: '580px',
         borderRadius: '8px',
         padding: '8px 16px',
-        left: 'calc(100vw / 2 - 400px)',
+        left: 'calc(100vw / 2 - 290px)',
       }}>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>
-          {props_dict[selectedProperty]?.label || selectedProperty} to color scheme
+          {props_dict[selectedProperty]?.label || selectedProperty} to color scheme {activeLevels[0] === 5 ? '10^(-3) %' : '%'}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-around' }}>
           {colors.map((color, index) => (
             <div key={index} style={{
               textAlign: 'center',
-              minWidth: '75px',
+              maxWidth: '55px',
+              minWidth: '50px',
               alignItems: 'center',
               display: 'flex',
               flexDirection: 'column'
@@ -121,7 +122,7 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
                 }}
               />
               <div style={{ fontSize: 10 }}>
-                {thresholds[index]} – {labels[index]}
+                {labels[index - 1] === undefined ? 0 : labels[index - 1]} – {labels[index]}
               </div>
             </div>
           ))}
@@ -155,8 +156,9 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           top: 20,
           left: 20,
           zIndex: 999,
-          minWidth: 260,
+          minWidth: 300,
           borderRadius: 8,
+          maxWidth: 300,
         }}
       >
         <div

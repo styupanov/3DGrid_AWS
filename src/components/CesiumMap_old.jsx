@@ -17,17 +17,17 @@ const CesiumMap = () => {
     viewerRef.current = viewer
 
 
-    const loadTileset = async () => {
-      try {
-        const tileset = await Cesium3DTileset.fromUrl('https://my-3d-tiles.s3.eu-north-1.amazonaws.com/tiles/test/tileset.json')
-        viewer.scene.primitives.add(tileset)
-
-        await viewer.zoomTo(tileset)
-        console.log('%c[✓] Tileset loaded & zoomed', 'color: green')
-      } catch (error) {
-        console.error('%c[✗] Error loading tileset:', 'color: red', error)
-      }
-    }
+    // const loadTileset = async () => {
+    //   try {
+    //     const tileset = await Cesium3DTileset.fromUrl('https://my-3d-tiles.s3.eu-north-1.amazonaws.com/tiles/test/tileset.json')
+    //     viewer.scene.primitives.add(tileset)
+    //
+    //     await viewer.zoomTo(tileset)
+    //     console.log('%c[✓] Tileset loaded & zoomed', 'color: green')
+    //   } catch (error) {
+    //     console.error('%c[✗] Error loading tileset:', 'color: red', error)
+    //   }
+    // }
 
     //FIXME OLD VERSION, if needed blop - uncomment
     const loadTileset = async () => {
