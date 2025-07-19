@@ -12,6 +12,11 @@ import { useState, useEffect, useRef } from 'react'
 import UI from './UI'
 import {Divider} from 'antd';
 import {getLevelConfig} from '@/components/utils';
+import coords from '../successful_routes_start_fin_coords.json';
+const coordsMap = {};
+coords.forEach(item => {
+  coordsMap[item.Cell_id] = { lat: item.lat, lon: item.lon };
+});
 
 const CesiumMap = () => {
   const viewerRef = useRef()
@@ -19,24 +24,40 @@ const CesiumMap = () => {
   const selectedFeatureRef = useRef(null)
   const [renderedFeature, setRenderedFeature] = useState(null)
   const [copiedKey, setCopiedKey] = useState(null)
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
+  const [popupPosition, setPopupPosition] = useState({ x: 350, y: 20 })
   const [selectedLevel, setSelectedLevel] = useState(5)
   const [selectedCellId, setSelectedCellId] = useState(null)
   const [selectedCellLevel, setSelectedCellLevel] = useState(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
+  const [searching, setSearching] = useState(false)
   const [filterProps, setFilterProps] = useState({
     pc_build3d: true,
     pc_green3d: true,
-    pc_roads_3d: true
+    pc_roads_3d: true,
+    pc_water3d: true,
+    LST: true,
+    NDVI: true,
+    AQI: true,
+    TJ: true,
   })
   const [filterRanges, setFilterRanges] = useState({
     pc_build3d: [0, 100],
     pc_green3d: [0, 100],
-    pc_roads_3d: [0, 100]
+    pc_roads_3d: [0, 100],
+    pc_water3d: [0, 100],
+    LST: [0, 100],
+    NDVI: [0, 100],
+    AQI: [0, 100],
+    TJ: [0, 100],
   });
   const [selectedProperty, setSelectedProperty] = useState('pc_build3d');
   const [loading, setLoading] = useState(false)
+  const [routeInfo, setRouteInfo] = useState({
+    startCell: null,
+    finishCell: null,
+    routeCellIds: [],
+  });
 
   const getBaseColor = () => {
     switch (selectedProperty) {
@@ -117,7 +138,7 @@ const CesiumMap = () => {
     applyColoring(tileset.root)
   }
 
-  const applyStyleToTileset = (tileset, activeProps, filterRanges, selectedProperty) => {
+  const applyStyleToTileset = (tileset, activeProps, filterRanges, selectedProperty, routeInfo) => {
     if (!tileset) return;
 
     const style = {};
@@ -125,7 +146,23 @@ const CesiumMap = () => {
     console.log('activeProps: ', activeProps)
     console.log('filterRanges: ', filterRanges)
     // === 1. ФИЛЬТРАЦИЯ ===
-    if (activeProps?.length > 0) {
+    if (routeInfo?.routeCellIds?.length > 0) {
+      console.log('// === ROUTE FILTER ===');
+
+      const idsSet = new Set(routeInfo.routeCellIds);
+      const routeCondition = Array.from(idsSet)
+        .map(id => `\${cell_id} === '${id}'`)
+        .join(' || ');
+
+      style.show = {
+        conditions: [
+          [routeCondition, 'true'],
+          ['true', 'false']
+        ]
+      };
+
+      console.log(`[✓] Applied route filter: ${routeCondition}`);
+    } else if (activeProps?.length > 0) {
       console.log('// === 1. ФИЛЬТРАЦИЯ ===');
       const filterConditions = activeProps.map(key => {
         const [min, max] = filterRanges[key] || [0, 100];
@@ -170,6 +207,30 @@ const CesiumMap = () => {
       const { thresholds } = levelConfig;
 
       const colorConditions = [];
+
+      // if (routeInfo && routeInfo.startCell) {
+      //   colorConditions.push([
+      //     `\${cell_id} === '${routeInfo.startCell}'`,
+      //     'color("green")'
+      //   ]);
+      // }
+      //
+      // if (routeInfo && routeInfo.finishCell) {
+      //   colorConditions.push([
+      //     `\${cell_id} === '${routeInfo.finishCell}'`,
+      //     'color("red")'
+      //   ]);
+      // }
+      //
+      // if (routeInfo && Array.isArray(routeInfo.routeCellIds) && routeInfo.routeCellIds.length > 0) {
+      //   // оставляем только routeCellIds
+      //   const idsSet = new Set(routeInfo.routeCellIds);
+      //   style.show = new Cesium.Expression(
+      //     `(${Array.from(idsSet).map(id => `\${cell_id} === '${id}'`).join(' || ')})`
+      //   );
+      // } else {
+      //   style.show = undefined; // показываем всё если нет маршрута
+      // }
 
       for (let i = 0; i < thresholds.length - 1; i++) {
         const min = thresholds[i];
@@ -244,14 +305,16 @@ const CesiumMap = () => {
       viewer.scene.primitives.removeAll()
 
       const tileset = await Cesium3DTileset.fromUrl(
+        // `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl2_routing/tileset.json`
         `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl${level}/tileset.json`
         // `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl${level}m/tileset/tileset.json`
         //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl3_test_merged-tiles/tileset.json`
-      //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/marked/lvl${level}/tileset.json`
+        //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/marked/lvl${level}/tileset.json`
       )
       // const tileset = await Cesium3DTileset.fromUrl(
       //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl5tetsfme/lvl4_test/tileset/tileset.json`
       // )
+
       tileset.maximumScreenSpaceError = 8 // Увеличьте для снижения детализации и повышения производительности
       tileset.maximumMemoryUsage = 512 // Максимальное использование памяти в МБ
       tileset.cullWithChildrenBounds = true // Использовать объединенные границы дочерних тайлов для отсечения
@@ -269,14 +332,6 @@ const CesiumMap = () => {
       tileset.foveatedConeSize = 0.1 // Размер конуса для фовеации
       tileset.foveatedMinimumScreenSpaceErrorRelaxation = 0.0 // Минимальное ослабление ошибки экранного пространства для фовеации
       tileset.foveatedTimeDelay = 0.2 // Задержка времени для фовеации
-
-      // tileset.maximumScreenSpaceError = 2
-      // tileset.dynamicScreenSpaceError = true
-      // tileset.maximumMemoryUsage = 128
-      // tileset.skipLevelOfDetail = true
-      // tileset.immediatelyLoadDesiredLevelOfDetail = false
-      // tileset.preloadWhenHidden = false
-      // tileset.preloadFlightDestinations = false
 
       viewer.scene.primitives.add(tileset)
       await viewer.zoomTo(tileset)
@@ -347,7 +402,7 @@ const CesiumMap = () => {
     })
   }
 
-  const handleSearch = (searchId, isParentSearch = false) => {
+  const handleSearch = (searchId, isParentSearch = false, color = Color.BLUE) => {
     const viewer = viewerRef.current
     const scene = viewer?.scene
 
@@ -363,20 +418,46 @@ const CesiumMap = () => {
         for (let i = 0; i < tile.content.featuresLength; i++) {
           const feature = tile.content.getFeature(i)
           const targetValue = isParentSearch ? feature.getProperty('parent_id') : feature.getProperty('cell_id')
-          console.log('targetValue: ', targetValue)
-          console.log('searchId: ', searchId)
+
           if (targetValue === searchId) {
             if (!isParentSearch && selectedFeatureRef.current && selectedFeatureRef.current !== feature) {
               selectedFeatureRef.current.color = Color.WHITE
             }
 
-            feature.color = Color.BLUE
+            feature.color = color
 
             if (!isParentSearch) {
               selectedFeatureRef.current = feature
               setRenderedFeature(feature)
               setSelectedCellId(searchId)
               setSelectedCellLevel(feature.getProperty('level'))
+              const lon = parseFloat(feature.getProperty('Longitude'));
+              const lat = parseFloat(feature.getProperty('Latitude'));
+              const height = parseFloat(feature.getProperty('Height') || 0);
+
+              if (!isNaN(lon) && !isNaN(lat)) {
+                // целевая точка
+                const target = Cesium.Cartesian3.fromDegrees(lon, lat, height);
+
+                // расчёт небольшой «не доезжаемости»
+                const offset = new Cesium.Cartesian3(500, 650, -500); // 500 м вверх
+                const destination = Cesium.Cartesian3.add(target, offset, new Cesium.Cartesian3());
+
+
+                viewer.camera.flyTo({
+                  destination,
+                  duration: 1.5,
+                  orientation: {
+                    heading: viewer.camera.heading,
+                    pitch: viewer.camera.pitch,
+                    roll: viewer.camera.roll
+                  }
+                });
+
+                console.log(`🛰️ Flying to cell_id: ${searchId} at [${lon}, ${lat}, ${height}]`);
+              } else {
+                console.warn(`🙈 Не удалось получить координаты для cell_id: ${searchId}`);
+              }
             }
 
             found = true
@@ -512,15 +593,62 @@ const CesiumMap = () => {
   }, [])
 
   useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    if (selectedLevel !== 2) return;
+
+    const flyAndSearch = (cellId, color) => {
+      const coord = coordsMap[cellId]; // твой словарь {cell_id: {lon, lat, height}}
+
+      if (coord) {
+        const { lon, lat, height = 0 } = coord;
+
+        const target = Cesium.Cartesian3.fromDegrees(lon, lat, height);
+        const offset = new Cesium.Cartesian3(500, 650, -500);
+        const destination = Cesium.Cartesian3.add(target, offset, new Cesium.Cartesian3());
+        setSearching(true);
+        viewer.camera.flyTo({
+          destination,
+          duration: 1.5,
+          orientation: {
+            heading: viewer.camera.heading,
+            pitch: viewer.camera.pitch,
+            roll: viewer.camera.roll
+          }
+        });
+
+        console.log(`🛰️ Flying (via coords) to cell_id: ${cellId} at [${lon}, ${lat}, ${height}]`);
+
+        setTimeout(() => {
+          handleSearch(cellId, false, color)
+          setSearching(false)
+        }, 4000);
+
+      } else {
+        console.warn(`😵 Нет координат в словаре для cell_id: ${cellId}`);
+      }
+    };
+
+    if (routeInfo.startCell) {
+      flyAndSearch(routeInfo.startCell, Cesium.Color.GREEN);
+    }
+
+    if (routeInfo.finishCell) {
+      flyAndSearch(routeInfo.finishCell, Cesium.Color.RED);
+    }
+  }, [routeInfo.startCell,routeInfo.finishCell, selectedLevel]);
+
+  useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer) return
 
     const tileset = viewer.scene.primitives._primitives.find(p => p instanceof Cesium3DTileset);
     if (tileset) {
-      applyStyleToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]), filterRanges, selectedProperty);
+      applyStyleToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]), filterRanges, selectedProperty, routeInfo);
       // applyFilterToTileset(tileset, );
     }
-  }, [filterProps, filterRanges, selectedProperty]);
+  }, [filterProps, filterRanges, selectedProperty, routeInfo]);
 
   // useEffect(() => {
   //   const viewer = viewerRef.current;
@@ -547,6 +675,21 @@ const CesiumMap = () => {
           zIndex: 2000
         }}>
           Загрузка тайлсета...
+        </div>
+      )}
+      {searching && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '20px 40px',
+          borderRadius: '8px',
+          zIndex: 2000
+        }}>
+          Ищем искомый объект...
         </div>
       )}
       <div id="cesiumContainer" style={{ width: '100%', height: '100vh' }} />
@@ -576,6 +719,7 @@ const CesiumMap = () => {
         onUpdateFilterRanges={setFilterRanges}
         selectedProperty={selectedProperty}
         setSelectedProperty={setSelectedProperty}
+        onRouteChange={setRouteInfo}
       />
       {renderedFeature && (
         <div
@@ -875,40 +1019,40 @@ const CesiumMap = () => {
             <>
               {/*FIXME Buildings*/}
               <div style={{marginTop: '8px'}}>
-              <div
-                key={renderedFeature.getProperty('pc_build3d')?.toString()}
-                style={{
-                  marginBottom: '4px',
-                  wordBreak: 'break-word',
-                  whiteSpace: 'pre-wrap',
-                  pointerEvents: 'auto'
-                }}
-              >
-                <strong>Buildings:</strong> {renderedFeature.getProperty('pc_build3d')?.toString() + ' ' + '%'}
-                {/*<button*/}
-                {/*  style={{*/}
-                {/*    marginLeft: '6px',*/}
-                {/*    cursor: 'pointer',*/}
-                {/*    backgroundColor: 'transparent',*/}
-                {/*    border: '1px solid white',*/}
-                {/*    color: 'white',*/}
-                {/*    fontSize: '12px',*/}
-                {/*    padding: '2px 6px',*/}
-                {/*    borderRadius: '4px'*/}
-                {/*  }}*/}
-                {/*  onClick={(e) => {*/}
-                {/*    e.stopPropagation()*/}
-                {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
-                {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
-                {/*    setCopiedKey('level')*/}
-                {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
-                {/*  }}*/}
-                {/*  title="Скопировать"*/}
-                {/*>*/}
-                {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
-                {/*</button>*/}
+                <div
+                  key={renderedFeature.getProperty('pc_build3d')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Buildings:</strong> {renderedFeature.getProperty('pc_build3d')?.toString() + ' ' + '%'}
+                  {/*<button*/}
+                  {/*  style={{*/}
+                  {/*    marginLeft: '6px',*/}
+                  {/*    cursor: 'pointer',*/}
+                  {/*    backgroundColor: 'transparent',*/}
+                  {/*    border: '1px solid white',*/}
+                  {/*    color: 'white',*/}
+                  {/*    fontSize: '12px',*/}
+                  {/*    padding: '2px 6px',*/}
+                  {/*    borderRadius: '4px'*/}
+                  {/*  }}*/}
+                  {/*  onClick={(e) => {*/}
+                  {/*    e.stopPropagation()*/}
+                  {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
+                  {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
+                  {/*    setCopiedKey('level')*/}
+                  {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
+                  {/*  }}*/}
+                  {/*  title="Скопировать"*/}
+                  {/*>*/}
+                  {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
+                  {/*</button>*/}
+                </div>
               </div>
-            </div>
 
               {/*FIXME Greenary*/}
               <div style={{marginTop: '8px'}}>

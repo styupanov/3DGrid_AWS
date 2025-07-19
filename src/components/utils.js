@@ -28,3 +28,22 @@ export const getLevelConfig = (level) => {
       }
   }
 }
+
+
+// tileset.maximumScreenSpaceError = 8 // Увеличьте для снижения детализации и повышения производительности
+// tileset.maximumMemoryUsage = 512 // Максимальное использование памяти в МБ
+// tileset.cullWithChildrenBounds = true // Использовать объединенные границы дочерних тайлов для отсечения
+// tileset.dynamicScreenSpaceError = true // Включить динамическую ошибку экранного пространства
+// tileset.dynamicScreenSpaceErrorDensity = 0.00278 // Плотность для динамической ошибки
+// tileset.dynamicScreenSpaceErrorFactor = 4.0 // Фактор для динамической ошибки
+// tileset.dynamicScreenSpaceErrorHeightFalloff = 0.25 // Падение высоты для динамической ошибки
+// tileset.skipLevelOfDetail = true // Пропуск уровней детализации
+// tileset.baseScreenSpaceError = 1024 // Базовая ошибка экранного пространства
+// tileset.skipScreenSpaceErrorFactor = 16 // Фактор ошибки для пропуска уровней
+// tileset.skipLevels = 1 // Количество уровней для пропуска
+// tileset.immediatelyLoadDesiredLevelOfDetail = false // Немедленная загрузка желаемого уровня детализации
+// tileset.loadSiblings = false // Загрузка соседних тайлов
+// tileset.foveatedScreenSpaceError = true // Приоритизация загрузки тайлов в центре экрана
+// tileset.foveatedConeSize = 0.1 // Размер конуса для фовеации
+// tileset.foveatedMinimumScreenSpaceErrorRelaxation = 0.0 // Минимальное ослабление ошибки экранного пространства для фовеации
+// tileset.foveatedTimeDelay = 0.2 // Задержка времени для фовеации

@@ -19,7 +19,18 @@ const starts = Array.from(firstSet);
 const finishes = Array.from(secondSet);
 
 
-const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterProps, filterProps, onUpdateFilterRanges, selectedProperty, setSelectedProperty  }) => {
+const UI = ({
+              onToggleLevel,
+              activeLevels,
+              onSearch,
+              onColorByType,
+              setFilterProps,
+              filterProps,
+              onUpdateFilterRanges,
+              selectedProperty,
+              setSelectedProperty,
+              onRouteChange
+}) => {
   const [searchId, setSearchId] = useState('')
   const [searchParentId, setSearchParentId] = useState('')
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -313,21 +324,38 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
           <strong>Route Navigation</strong>
           <div style={{ marginTop: 10 }}>
             <Select
+              showSearch
               placeholder="Start Cell"
               style={{ width: '100%', marginBottom: 10 }}
               value={startCell}
               onChange={(val) => {
                 setStartCell(val);
                 setFinishCell(null); // сбрасываем finish при смене start
+                onRouteChange({
+                  startCell: val,
+                  finishCell: null,
+                  routeCellIds: [],
+                });
               }}
               options={starts.map(s => ({ label: s, value: s }))}
+              optionFilterProp="label"
+              filterOption={(input, option) =>
+                option.label.toLowerCase().includes(input.toLowerCase())
+              }
             />
 
             <Select
               placeholder="Finish Cell"
               style={{ width: '100%', marginBottom: 10 }}
               value={finishCell}
-              onChange={(val) => setFinishCell(val)}
+              onChange={(val) => {
+                setFinishCell(val);
+                onRouteChange({
+                  startCell,
+                  finishCell: val,
+                  routeCellIds: [],
+                });
+              }}
               options={availableFinishes.map(f => ({ label: f, value: f }))}
             />
 
@@ -345,9 +373,19 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
                 if (found && found.cell_id) {
                   setRouteCellIds(found.cell_id);
                   console.log('Found cell_id:', found.cell_id);
+                  onRouteChange({
+                    startCell,
+                    finishCell,
+                    routeCellIds: found.cell_id,
+                  });
                 } else {
                   setRouteCellIds([]);
                   console.log('No matching route found.');
+                  onRouteChange({
+                    startCell,
+                    finishCell,
+                    routeCellIds: [],
+                  });
                 }
               }}
               disabled={!startCell || !finishCell}
@@ -361,7 +399,13 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
               onClick={() => {
                 setStartCell(null);
                 setFinishCell(null);
+                setRouteCellIds([]);
                 console.log('Route cleared');
+                onRouteChange({
+                  startCell: null,
+                  finishCell: null,
+                  routeCellIds: [],
+                });
               }}
             >
               Clear Route
