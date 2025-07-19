@@ -4,6 +4,21 @@ import {DownOutlined, UpOutlined} from '@ant-design/icons';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import {getLevelConfig} from '@/components/utils';
 
+import data from '../successful_routes_formated.json';
+const firstSet = new Set();
+const secondSet = new Set();
+
+for (const item of data) {
+  if (item.start_finish && Array.isArray(item.start_finish)) {
+    firstSet.add(item.start_finish[0]);
+    secondSet.add(item.start_finish[1]);
+  }
+}
+
+const starts = Array.from(firstSet);
+const finishes = Array.from(secondSet);
+
+
 const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterProps, filterProps, onUpdateFilterRanges, selectedProperty, setSelectedProperty  }) => {
   const [searchId, setSearchId] = useState('')
   const [searchParentId, setSearchParentId] = useState('')
@@ -15,13 +30,17 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
   })
   const [selectedProp, setSelectedProp] = useState('pc_build3d')
   const [collapsed, setCollapsed] = useState(false)
+  const [startCell, setStartCell] = useState(null);
+  const [finishCell, setFinishCell] = useState(null);
+  const [routeCellIds, setRouteCellIds] = useState([]);
+
   const { user, signOut } = useAuthenticator((context) => [context.user]);
   const handleSliderChange = (key, value) => {
     setSliderValues(prev => ({ ...prev, [key]: value }))
     setFilterProps(prev => ({ ...prev, [key]: true }))
   }
 
-  const levels = [2, 3, 4, 5]
+  const levels = [1, 2, 3, 4, 5]
 
   const props_dict = {
     pc_build3d: {label: 'Buildings', value: 'pc_build3d'},
@@ -138,6 +157,13 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
   // if(user){
   //   debugger
   // }
+
+  const availableFinishes = startCell
+    ? data
+      .filter(item => item.start_finish?.[0] === startCell)
+      .map(item => item.start_finish[1])
+      .filter((v, i, arr) => arr.indexOf(v) === i) // уникальные
+    : finishes;
 
   return (
     <ConfigProvider
@@ -265,6 +291,84 @@ const UI = ({ onToggleLevel, activeLevels, onSearch, onColorByType, setFilterPro
         </div>
         {renderLegend()}
       </Card>
+
+      <ConfigProvider>
+        {/* … существующий Card здесь … */}
+      </ConfigProvider>
+      {activeLevels[0] === 2 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 20,
+            right: 20,
+            zIndex: 999,
+            minWidth: 250,
+            maxWidth: 300,
+            background: 'white',
+            borderRadius: 8,
+            padding: 12,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+          }}
+        >
+          <strong>Route Navigation</strong>
+          <div style={{ marginTop: 10 }}>
+            <Select
+              placeholder="Start Cell"
+              style={{ width: '100%', marginBottom: 10 }}
+              value={startCell}
+              onChange={(val) => {
+                setStartCell(val);
+                setFinishCell(null); // сбрасываем finish при смене start
+              }}
+              options={starts.map(s => ({ label: s, value: s }))}
+            />
+
+            <Select
+              placeholder="Finish Cell"
+              style={{ width: '100%', marginBottom: 10 }}
+              value={finishCell}
+              onChange={(val) => setFinishCell(val)}
+              options={availableFinishes.map(f => ({ label: f, value: f }))}
+            />
+
+            <Button
+              type="primary"
+              style={{ width: '100%', marginBottom: 5 }}
+              onClick={() => {
+                const found = data.find(
+                  (item) =>
+                    item.start_finish &&
+                    item.start_finish[0] === startCell &&
+                    item.start_finish[1] === finishCell
+                );
+
+                if (found && found.cell_id) {
+                  setRouteCellIds(found.cell_id);
+                  console.log('Found cell_id:', found.cell_id);
+                } else {
+                  setRouteCellIds([]);
+                  console.log('No matching route found.');
+                }
+              }}
+              disabled={!startCell || !finishCell}
+            >
+              Create Route
+            </Button>
+            <Button
+              type="default"
+              danger
+              style={{ width: '100%' }}
+              onClick={() => {
+                setStartCell(null);
+                setFinishCell(null);
+                console.log('Route cleared');
+              }}
+            >
+              Clear Route
+            </Button>
+          </div>
+        </div>
+      )}
     </ConfigProvider>
   )
 }

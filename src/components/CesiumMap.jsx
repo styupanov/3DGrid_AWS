@@ -244,7 +244,9 @@ const CesiumMap = () => {
       viewer.scene.primitives.removeAll()
 
       const tileset = await Cesium3DTileset.fromUrl(
-        `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl${level}m/tileset/tileset.json`
+        `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl${level}/tileset.json`
+        // `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl${level}m/tileset/tileset.json`
+        //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl3_test_merged-tiles/tileset.json`
       //   `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/marked/lvl${level}/tileset.json`
       )
       // const tileset = await Cesium3DTileset.fromUrl(
