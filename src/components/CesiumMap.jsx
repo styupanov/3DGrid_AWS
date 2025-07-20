@@ -31,16 +31,16 @@ const CesiumMap = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [searching, setSearching] = useState(false)
-  const [filterProps, setFilterProps] = useState({
-    pc_build3d: true,
-    pc_green3d: true,
-    pc_roads_3d: true,
-    pc_water3d: true,
-    LST: true,
-    NDVI: true,
-    AQI: true,
-    TJ: true,
-  })
+  const [filterProps, setFilterProps] = useState([
+    'pc_build3d',
+    'pc_green3d',
+    'pc_roads_3d',
+    'pc_water3d',
+    'LST',
+    'NDVI',
+    'AQI',
+    'TJ',
+  ])
   const [filterRanges, setFilterRanges] = useState({
     pc_build3d: [0, 100],
     pc_green3d: [0, 100],
@@ -59,14 +59,14 @@ const CesiumMap = () => {
     routeCellIds: [],
   });
 
-  const getBaseColor = () => {
-    switch (selectedProperty) {
-      case 'pc_build3d': return '#67000D';
-      case 'pc_green3d': return '#006837';
-      case 'pc_roads_3d': return '#1A1A1A';
-      default: return '#000000';
-    }
-  };
+  // const getBaseColor = () => {
+  //   switch (selectedProperty) {
+  //     case 'pc_build3d': return '#67000D';
+  //     case 'pc_green3d': return '#006837';
+  //     case 'pc_roads_3d': return '#1A1A1A';
+  //     default: return '#000000';
+  //   }
+  // };
 
   // const colorBySelectedProperty = (tileset) => {
   //   if (!tileset || !selectedProperty) return;
@@ -138,17 +138,18 @@ const CesiumMap = () => {
     applyColoring(tileset.root)
   }
 
-  const applyStyleToTileset = (tileset, activeProps, filterRanges, selectedProperty, routeInfo) => {
+  const applyStyleToTileset = (
+    tileset,
+  ) => {
     if (!tileset) return;
 
     const style = {};
-    console.log(':::::BEFORE FILTERS:::::')
-    console.log('activeProps: ', activeProps)
-    console.log('filterRanges: ', filterRanges)
+    console.log(':::::BEFORE FILTERS:::::');
+    console.log('activeProps:', filterProps);
+    console.log('filterRanges:', filterRanges.pc_build3d);
     // === 1. ФИЛЬТРАЦИЯ ===
     if (routeInfo?.routeCellIds?.length > 0) {
       console.log('// === ROUTE FILTER ===');
-
       const idsSet = new Set(routeInfo.routeCellIds);
       const routeCondition = Array.from(idsSet)
         .map(id => `\${cell_id} === '${id}'`)
@@ -156,39 +157,36 @@ const CesiumMap = () => {
 
       style.show = {
         conditions: [
-          [routeCondition, 'true'],
-          ['true', 'false']
+          [routeCondition, 'true'],     // показываем только маршрут
+          ['true', 'false']             // всё остальное скрыть
         ]
       };
 
       console.log(`[✓] Applied route filter: ${routeCondition}`);
-    } else if (activeProps?.length > 0) {
-      console.log('// === 1. ФИЛЬТРАЦИЯ ===');
-      const filterConditions = activeProps.map(key => {
-        const [min, max] = filterRanges[key] || [0, 100];
+    } else if (filterProps) {
+      console.log('// === ACTIVE PROPS FILTER ===');
+      const filterConditions = filterProps.map(key => {
+        const [min, max] = filterRanges?.[key] || [0, 100];
         return `\${${key}} >= ${min} && \${${key}} <= ${max}`;
       });
+      // debugger
       const combinedFilter = filterConditions.join(' && ');
-
       const showConditions = [];
-
-      // Добавим первым условием исключение по selectedProperty === 0
+      console.log('applyStyleToTileset selectedProperty: - ',selectedProperty)
       if (selectedProperty) {
         showConditions.push([`\${${selectedProperty}} === 0`, 'false']);
       }
 
-      // Основное условие фильтра
       showConditions.push([combinedFilter, 'true']);
       showConditions.push(['true', 'false']); // fallback
 
       style.show = { conditions: showConditions };
-
       console.log(`[✓] Applied filter condition: ${combinedFilter} + no zero`);
     }
-    console.log('Im at applyStyleToTileset, before // === 2. РАСКРАСКА ===')
+
     // === 2. РАСКРАСКА ===
     if (selectedProperty) {
-      console.log('Im in // === 2. РАСКРАСКА ===');
+      console.log('// === COLORING ===');
 
       const colors = [
         'color("rgba(0, 102, 255, 0.05)")',
@@ -202,36 +200,26 @@ const CesiumMap = () => {
         'color("rgba(255, 43, 0, 0.9)")',
         'color("rgba(255, 0, 0, 1)")',
       ];
+      // console.log('level from props:: - ', level);
+      const levelConfig = getLevelConfig(selectedLevel, selectedProperty);
+      if (!levelConfig) {
+        console.warn(`⚠️ no levelConfig for level=${selectedLevel} & prop=${selectedProperty}`);
+        return;
+      }
 
-      const levelConfig = getLevelConfig([selectedLevel][0]);
       const { thresholds } = levelConfig;
 
+      if (!thresholds || thresholds.length < 2) {
+        console.warn(`⚠️ invalid thresholds:`, thresholds);
+        return;
+      }
+
+      if (thresholds.length - 1 > colors.length) {
+        console.warn(`⚠️ not enough colors for thresholds. thresholds=${thresholds.length - 1} colors=${colors.length}`);
+        return;
+      }
+
       const colorConditions = [];
-
-      // if (routeInfo && routeInfo.startCell) {
-      //   colorConditions.push([
-      //     `\${cell_id} === '${routeInfo.startCell}'`,
-      //     'color("green")'
-      //   ]);
-      // }
-      //
-      // if (routeInfo && routeInfo.finishCell) {
-      //   colorConditions.push([
-      //     `\${cell_id} === '${routeInfo.finishCell}'`,
-      //     'color("red")'
-      //   ]);
-      // }
-      //
-      // if (routeInfo && Array.isArray(routeInfo.routeCellIds) && routeInfo.routeCellIds.length > 0) {
-      //   // оставляем только routeCellIds
-      //   const idsSet = new Set(routeInfo.routeCellIds);
-      //   style.show = new Cesium.Expression(
-      //     `(${Array.from(idsSet).map(id => `\${cell_id} === '${id}'`).join(' || ')})`
-      //   );
-      // } else {
-      //   style.show = undefined; // показываем всё если нет маршрута
-      // }
-
       for (let i = 0; i < thresholds.length - 1; i++) {
         const min = thresholds[i];
         const max = thresholds[i + 1];
@@ -244,12 +232,10 @@ const CesiumMap = () => {
       colorConditions.push(['true', 'color("rgba(0,0,0,0)")']); // fallback
 
       style.color = { conditions: colorConditions };
-
-      console.log(`[✓] Applied fixed color scheme by ${selectedProperty}`);
+      console.log(`[✓] Applied color scheme for ${selectedProperty}`);
     }
 
     tileset.style = new Cesium.Cesium3DTileStyle(style);
-    console.log(tileset.style)
   };
 
   // const applyFeatureFilter = (tileset) => {
@@ -335,7 +321,10 @@ const CesiumMap = () => {
 
       viewer.scene.primitives.add(tileset)
       await viewer.zoomTo(tileset)
-      applyStyleToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]), filterRanges, selectedProperty);
+      console.log('::loadTileset:: level - ', level)
+      //FIXME в applyStyleToTileset Передавай LEvel
+      console.log('::loadTileset:: selectedLevel - ', selectedLevel)
+      applyStyleToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]), filterRanges, selectedProperty, routeInfo, level);
       // applyFilterToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]))
       // colorBySelectedProperty(tileset)
       setLoading(false)
@@ -641,14 +630,20 @@ const CesiumMap = () => {
 
   useEffect(() => {
     const viewer = viewerRef.current
+    console.log('!!!!!!!!!!!!!!!viewer', viewer)
     if (!viewer) return
 
-    const tileset = viewer.scene.primitives._primitives.find(p => p instanceof Cesium3DTileset);
-    if (tileset) {
-      applyStyleToTileset(tileset, Object.keys(filterProps).filter(k => filterProps[k]), filterRanges, selectedProperty, routeInfo);
-      // applyFilterToTileset(tileset, );
-    }
-  }, [filterProps, filterRanges, selectedProperty, routeInfo]);
+
+    setTimeout(
+      () => {
+        const tileset = viewer.scene.primitives._primitives.find(p => p instanceof Cesium3DTileset);
+        console.log('!!!!!!!!!!!!!!!tileset', tileset)
+        console.log('!!!!!!!!!!!!!!!applyStyleToTileset at useEffect')
+        applyStyleToTileset(tileset)},
+      1000)
+
+    // applyFilterToTileset(tileset, );
+  }, [filterProps, filterRanges, selectedProperty, routeInfo, selectedLevel]);
 
   // useEffect(() => {
   //   const viewer = viewerRef.current;
@@ -695,6 +690,7 @@ const CesiumMap = () => {
       <div id="cesiumContainer" style={{ width: '100%', height: '100vh' }} />
       <UI
         onToggleLevel={(level) => {
+          console.log('toggleLevel', level);
           // Сбросить предыдущую выбранную фичу и скрыть попап
           if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
             try {
@@ -707,12 +703,11 @@ const CesiumMap = () => {
             setSelectedCellId(null)
             setSelectedCellLevel(null)
           }
-          setFilterProps({ pc_build3d: true, pc_green3d: true, pc_roads_3d: true })
           setSelectedLevel(level)
           loadTileset(level)
         }}
         filterProps={filterProps}
-        activeLevels={[selectedLevel]}
+        activeLevels={selectedLevel}
         onSearch={handleSearch}
         onColorByType={colorByType}
         setFilterProps={setFilterProps}
@@ -1125,6 +1120,81 @@ const CesiumMap = () => {
                   {/*>*/}
                   {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
                   {/*</button>*/}
+                </div>
+              </div>
+
+              {/*FIXME Water*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('pc_water3d')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Water:</strong>{renderedFeature.getProperty('pc_water3d')?.toString() + ' ' + '%'}
+                </div>
+              </div>
+
+              {/*FIXME Land surface temperature*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('LST')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Land surface temperature:</strong>{renderedFeature.getProperty('LST')?.toString() + ' ' + '%'}
+                </div>
+              </div>
+
+              {/*FIXME Normalized Difference Vegetation Index*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('NDVI')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Normalized Difference Vegetation Index:</strong>{renderedFeature.getProperty('NDVI')?.toString() + ' ' + '%'}
+                </div>
+              </div>
+
+              {/*FIXME Air Quality Index (AQI) Basics*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('AQI')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Air Quality Index (AQI) Basics:</strong>{renderedFeature.getProperty('AQI')?.toString() + ' ' + '%'}
+                </div>
+              </div>
+
+              {/*FIXME Traffic jam index*/}
+              <div style={{marginTop: '8px'}}>
+                <div
+                  key={renderedFeature.getProperty('TJ')?.toString()}
+                  style={{
+                    marginBottom: '4px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <strong>Traffic jam index:</strong>{renderedFeature.getProperty('TJ')?.toString() + ' ' + '%'}
                 </div>
               </div>
             </>

@@ -38,6 +38,11 @@ const UI = ({
     pc_build3d: [0, 0.01],
     pc_green3d: [0, 0.01],
     pc_roads_3d: [0, 0.01],
+    pc_water3d: [0, 0.01],
+    LST: [0, 0.01],
+    NDVI: [0, 0.01],
+    AQI: [0, 0.01],
+    TJ: [0, 0.01],
   })
   const [selectedProp, setSelectedProp] = useState('pc_build3d')
   const [collapsed, setCollapsed] = useState(false)
@@ -48,7 +53,6 @@ const UI = ({
   const { user, signOut } = useAuthenticator((context) => [context.user]);
   const handleSliderChange = (key, value) => {
     setSliderValues(prev => ({ ...prev, [key]: value }))
-    setFilterProps(prev => ({ ...prev, [key]: true }))
   }
 
   const levels = [1, 2, 3, 4, 5]
@@ -56,22 +60,35 @@ const UI = ({
   const props_dict = {
     pc_build3d: {label: 'Buildings', value: 'pc_build3d'},
     pc_green3d: {label: 'Greenery', value: 'pc_green3d'},
-    pc_roads_3d: {label: 'Roads', value: 'pc_roads_3d'}
+    pc_roads_3d: {label: 'Roads', value: 'pc_roads_3d'},
+    pc_water3d: {label: 'Water', value: 'pc_water3d'},
+    LST: {label: 'Land surface temperature', value: 'LST'},
+    NDVI: {label: 'Normalized Difference Vegetation Index', value: 'NDVI'},
+    AQI: {label: 'Air Quality Index (AQI) Basics', value: 'AQI'},
+    TJ: {label: 'Traffic jam index', value: 'TJ'},
   }
 
 
 
   useEffect(() => {
-    const { min, max } = getLevelConfig(activeLevels[0]);
+    const level = activeLevels;
+
     const updated = {
-      pc_build3d: [min, max],
-      pc_green3d: [min, max],
-      pc_roads_3d: [min, max]
+      pc_build3d: [getLevelConfig(level, 'pc_build3d').min, getLevelConfig(level, 'pc_build3d').max],
+      pc_green3d: [getLevelConfig(level, 'pc_green3d').min, getLevelConfig(level, 'pc_green3d').max],
+      pc_roads_3d: [getLevelConfig(level, 'pc_roads_3d').min, getLevelConfig(level, 'pc_roads_3d').max],
+      pc_water3d: [getLevelConfig(level, 'pc_water3d').min, getLevelConfig(level, 'pc_water3d').max],
+      LST: [getLevelConfig(level, 'LST').min, getLevelConfig(level, 'LST').max],
+      NDVI: [getLevelConfig(level, 'NDVI').min, getLevelConfig(level, 'NDVI').max],
+      AQI: [getLevelConfig(level, 'AQI').min, getLevelConfig(level, 'AQI').max],
+      TJ: [getLevelConfig(level, 'TJ').min, getLevelConfig(level, 'TJ').max],
     };
+    console.log('setSliderValues updated useEffect', updated);
     setSliderValues(updated);
-  }, [activeLevels[0]]);
+  }, [activeLevels]);
 
   useEffect(() => {
+    console.log('onUpdateFilterRanges sliderValues useEffect', sliderValues);
     onUpdateFilterRanges(sliderValues);
   }, [sliderValues, onUpdateFilterRanges]);
 
@@ -90,18 +107,6 @@ const UI = ({
       return baseColor + Math.floor(alpha * 255).toString(16).padStart(2, '0')
     })
 
-    // const thresholds = activeLevels[0] === 5
-    //   ? ['0', '0.001', '0.002', '0.003', '0.004', '0.005', '0.006', '0.007', '0.008', '0.009']
-    //   : activeLevels[0] === 4
-    //     ? ['0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1']
-    //     : ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90'];
-    //
-    // const labels = activeLevels[0] === 5
-    //   ? ['0.001', '0.002', '0.003', '0.004', '0.005', '0.006', '0.007', '0.008', '0.009', '0.01']
-    //   : activeLevels[0] === 4
-    //     ? ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1']
-    //     : ['10', '20', '30', '40', '50', '60', '70', '80', '90', '100+'];
-
     const colors = [
       'rgba(0, 102, 255, 0.05)',
       'rgba(0, 149, 255, 0.2)',
@@ -115,7 +120,7 @@ const UI = ({
       'rgba(255, 0, 0, 1)'
     ];
 
-    const { thresholds, labels } = getLevelConfig(activeLevels[0])
+    const { thresholds, labels } = getLevelConfig(activeLevels, selectedProperty);
 
 
 
@@ -130,7 +135,7 @@ const UI = ({
         left: 'calc(100vw / 2 - 290px)',
       }}>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>
-          {props_dict[selectedProperty]?.label || selectedProperty} to color scheme {activeLevels[0] === 5 ? '10^(-3) %' : '%'}
+          {props_dict[selectedProperty]?.label || selectedProperty} to color scheme {activeLevels === 5 ? '10^(-3) %' : '%'}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-around' }}>
           {colors.map((color, index) => (
@@ -152,7 +157,7 @@ const UI = ({
                 }}
               />
               <div style={{ fontSize: 10 }}>
-                {labels[index - 1] === undefined ? 0 : labels[index - 1]} – {labels[index]}
+                {labels[index - 1] === undefined ? 0 : labels[index]} – {labels[index + 1]}
               </div>
             </div>
           ))}
@@ -161,10 +166,10 @@ const UI = ({
     )
   }
 
-  const levelMin = activeLevels[0] === 5 ? 0 : activeLevels[0] === 4 ? 0 : 0;
-  const levelMax = activeLevels[0] === 5 ? 0.01 : activeLevels[0] === 4 ? 1 : 10;
+  const levelMin = activeLevels === 5 ? 0 : activeLevels === 4 ? 0 : 0;
+  const levelMax = activeLevels === 5 ? 0.01 : activeLevels === 4 ? 1 : 10;
 
-  const { min, max, step } = getLevelConfig(activeLevels[0]);
+  const { min, max, step } = getLevelConfig(activeLevels, selectedProperty);
   // if(user){
   //   debugger
   // }
@@ -218,7 +223,7 @@ const UI = ({
             <div style={{ marginBottom: 10 }}>
               <strong>Cell size level</strong>
               <Select
-                value={activeLevels[0]}
+                value={activeLevels}
                 onChange={(value) => onToggleLevel(value)}
                 style={{ width: '100%', marginTop: 5 }}
               >
@@ -239,7 +244,12 @@ const UI = ({
                 options={[
                   { label: 'Buildings', value: 'pc_build3d' },
                   { label: 'Greenery', value: 'pc_green3d' },
-                  { label: 'Roads', value: 'pc_roads_3d' }
+                  { label: 'Roads', value: 'pc_roads_3d' },
+                  { label: 'Water', value: 'pc_water3d' },
+                  { label: 'Land surface temperature', value: 'LST' },
+                  { label: 'Normalized Difference Vegetation Index', value: 'NDVI' },
+                  { label: 'Air Quality Index (AQI) Basics', value: 'AQI' },
+                  { label: 'Traffic jam index', value: 'TJ' },
                 ]}
               />
             </div>
@@ -248,19 +258,25 @@ const UI = ({
 
             <div style={{ marginBottom: 10, marginTop: 10, marginLeft: 2, marginRight: 2 }}>
               <strong style={{ marginBottom: 10, display: 'block'}} >Range for properties</strong>
-              {Object.keys(sliderValues).map((key) => (
-                <div key={key}>
-                  <div>{props_dict[key].label}: {sliderValues[key][0]} - {sliderValues[key][1]}</div>
-                  <Slider
-                    range={{ draggableTrack: true }}
-                    value={sliderValues[key]}
-                    onChange={(value) => handleSliderChange(key, value)}
-                    min={min}
-                    max={max}
-                    step={step}
-                  />
-                </div>
-              ))}
+              {Object.keys(sliderValues).map((key) => {
+                const { min, max, step } = getLevelConfig(activeLevels, key);
+
+                return (
+                  <div key={key}>
+                    <div>
+                      {props_dict[key].label}: {sliderValues[key][0]} - {sliderValues[key][1]}
+                    </div>
+                    <Slider
+                      range={{ draggableTrack: true }}
+                      value={sliderValues[key]}
+                      onChange={(value) => handleSliderChange(key, value)}
+                      min={min}
+                      max={max}
+                      step={step}
+                    />
+                  </div>
+                );
+              })}
             </div>
 
             <Divider style={{margin: '10px 0'}}/>
@@ -306,7 +322,7 @@ const UI = ({
       <ConfigProvider>
         {/* … существующий Card здесь … */}
       </ConfigProvider>
-      {activeLevels[0] === 2 && (
+      {activeLevels === 2 && (
         <div
           style={{
             position: 'absolute',
