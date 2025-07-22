@@ -64,7 +64,7 @@ const UI = ({
     pc_water3d: {label: 'Water', value: 'pc_water3d'},
     LST: {label: 'Land surface temperature', value: 'LST'},
     NDVI: {label: 'Normalized Difference Vegetation Index', value: 'NDVI'},
-    AQI: {label: 'Air Quality Index (AQI) Basics', value: 'AQI'},
+    AQI: {label: 'Air Quality Index (AQI)', value: 'AQI'},
     TJ: {label: 'Traffic jam index', value: 'TJ'},
   }
 
@@ -122,7 +122,18 @@ const UI = ({
 
     const { thresholds, labels } = getLevelConfig(activeLevels, selectedProperty);
 
+    const getColorSchemeUnit = (level, prop) => {
+      const tinyBoys = ['pc_build3d', 'pc_green3d', 'pc_roads_3d', 'pc_water3d'];
+      const weirdBoys = ['LST', 'NDVI', 'AQI', 'TJ'];
 
+      if (weirdBoys.includes(prop)) return '';
+
+      if (level === 5 && tinyBoys.includes(prop)) return '10⁻⁶ %';
+
+      if (level === 4 && prop === 'pc_water3d') return '10⁻² %';
+
+      return '%';
+    };
 
     return (
       <div style={{
@@ -135,7 +146,8 @@ const UI = ({
         left: 'calc(100vw / 2 - 290px)',
       }}>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>
-          {props_dict[selectedProperty]?.label || selectedProperty} to color scheme {activeLevels === 5 ? '10^(-3) %' : '%'}
+          {(props_dict[selectedProperty]?.label || selectedProperty) + ' '}
+          to color scheme {' ' + getColorSchemeUnit(activeLevels, selectedProperty)}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-around' }}>
           {colors.map((color, index) => (

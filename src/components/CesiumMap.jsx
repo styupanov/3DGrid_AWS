@@ -654,6 +654,19 @@ const CesiumMap = () => {
   //     colorBySelectedProperty(tileset);
   //   }
   // }, [selectedProperty]);
+  const formatDecimelsBGRW = (value) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return value; // вдруг там null или чушь
+    const decimals = (selectedLevel === 4 || selectedLevel === 5) ? 6 : 2;
+    return num.toFixed(decimals);
+  };
+
+  const formatDecimelsLNAT = (value) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return value; // вдруг там null или чушь
+    const decimals = 2;
+    return num.toFixed(decimals);
+  };
 
   return (
     <>
@@ -1023,29 +1036,7 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Buildings:</strong> {renderedFeature.getProperty('pc_build3d')?.toString() + ' ' + '%'}
-                  {/*<button*/}
-                  {/*  style={{*/}
-                  {/*    marginLeft: '6px',*/}
-                  {/*    cursor: 'pointer',*/}
-                  {/*    backgroundColor: 'transparent',*/}
-                  {/*    border: '1px solid white',*/}
-                  {/*    color: 'white',*/}
-                  {/*    fontSize: '12px',*/}
-                  {/*    padding: '2px 6px',*/}
-                  {/*    borderRadius: '4px'*/}
-                  {/*  }}*/}
-                  {/*  onClick={(e) => {*/}
-                  {/*    e.stopPropagation()*/}
-                  {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
-                  {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
-                  {/*    setCopiedKey('level')*/}
-                  {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
-                  {/*  }}*/}
-                  {/*  title="Скопировать"*/}
-                  {/*>*/}
-                  {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
-                  {/*</button>*/}
+                  <strong>Buildings:</strong> {formatDecimelsBGRW(renderedFeature.getProperty('pc_build3d')) + ' ' + '%'}
                 </div>
               </div>
 
@@ -1060,29 +1051,7 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Greenary:</strong>{renderedFeature.getProperty('pc_green3d')?.toString() + ' ' + '%'}
-                  {/*<button*/}
-                  {/*  style={{*/}
-                  {/*    marginLeft: '6px',*/}
-                  {/*    cursor: 'pointer',*/}
-                  {/*    backgroundColor: 'transparent',*/}
-                  {/*    border: '1px solid white',*/}
-                  {/*    color: 'white',*/}
-                  {/*    fontSize: '12px',*/}
-                  {/*    padding: '2px 6px',*/}
-                  {/*    borderRadius: '4px'*/}
-                  {/*  }}*/}
-                  {/*  onClick={(e) => {*/}
-                  {/*    e.stopPropagation()*/}
-                  {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
-                  {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
-                  {/*    setCopiedKey('level')*/}
-                  {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
-                  {/*  }}*/}
-                  {/*  title="Скопировать"*/}
-                  {/*>*/}
-                  {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
-                  {/*</button>*/}
+                  <strong>Greenary:</strong>{formatDecimelsBGRW(renderedFeature.getProperty('pc_green3d')) + ' ' + '%'}
                 </div>
               </div>
 
@@ -1097,29 +1066,7 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Roads:</strong>{renderedFeature.getProperty('pc_roads_3d')?.toString() + ' ' + '%'}
-                  {/*<button*/}
-                  {/*  style={{*/}
-                  {/*    marginLeft: '6px',*/}
-                  {/*    cursor: 'pointer',*/}
-                  {/*    backgroundColor: 'transparent',*/}
-                  {/*    border: '1px solid white',*/}
-                  {/*    color: 'white',*/}
-                  {/*    fontSize: '12px',*/}
-                  {/*    padding: '2px 6px',*/}
-                  {/*    borderRadius: '4px'*/}
-                  {/*  }}*/}
-                  {/*  onClick={(e) => {*/}
-                  {/*    e.stopPropagation()*/}
-                  {/*    console.log('[COPY]', renderedFeature.getProperty('level')?.toString())*/}
-                  {/*    navigator.clipboard.writeText(renderedFeature.getProperty('level')?.toString())*/}
-                  {/*    setCopiedKey('level')*/}
-                  {/*    setTimeout(() => setCopiedKey(null), 1500)*/}
-                  {/*  }}*/}
-                  {/*  title="Скопировать"*/}
-                  {/*>*/}
-                  {/*  {copiedKey === name ? 'Copied!' : 'Copy'}*/}
-                  {/*</button>*/}
+                  <strong>Roads:</strong>{formatDecimelsBGRW(renderedFeature.getProperty('pc_roads_3d')) + ' ' + '%'}
                 </div>
               </div>
 
@@ -1134,10 +1081,21 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Water:</strong>{renderedFeature.getProperty('pc_water3d')?.toString() + ' ' + '%'}
+                  <strong>Water:</strong>{formatDecimelsBGRW(renderedFeature.getProperty('pc_water3d')) + ' ' + '%'}
                 </div>
               </div>
 
+
+            </>
+          )}
+          <Divider
+            style={{
+              backgroundColor: 'white',
+            }}
+          />
+          <strong> Cell characteristics:</strong>
+          {typeof renderedFeature.getProperty === 'function' && (
+            <>
               {/*FIXME Land surface temperature*/}
               <div style={{marginTop: '8px'}}>
                 <div
@@ -1149,7 +1107,7 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Land surface temperature:</strong>{renderedFeature.getProperty('LST')?.toString() + ' ' + '%'}
+                  <strong>Land surface temperature:</strong>{formatDecimelsLNAT(renderedFeature.getProperty('LST')) + ' ' + '°C'}
                 </div>
               </div>
 
@@ -1164,11 +1122,11 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Normalized Difference Vegetation Index:</strong>{renderedFeature.getProperty('NDVI')?.toString() + ' ' + '%'}
+                  <strong>Normalized Difference Vegetation Index:</strong>{formatDecimelsLNAT(renderedFeature.getProperty('NDVI')) + ' '}
                 </div>
               </div>
 
-              {/*FIXME Air Quality Index (AQI) Basics*/}
+              {/*FIXME Air Quality Index (AQI)*/}
               <div style={{marginTop: '8px'}}>
                 <div
                   key={renderedFeature.getProperty('AQI')?.toString()}
@@ -1179,7 +1137,7 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Air Quality Index (AQI) Basics:</strong>{renderedFeature.getProperty('AQI')?.toString() + ' ' + '%'}
+                  <strong>Air Quality Index (AQI):</strong>{formatDecimelsLNAT(renderedFeature.getProperty('AQI')) + ' '}
                 </div>
               </div>
 
@@ -1194,12 +1152,11 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Traffic jam index:</strong>{renderedFeature.getProperty('TJ')?.toString() + ' ' + '%'}
+                  <strong>Traffic jam index:</strong>{formatDecimelsLNAT(renderedFeature.getProperty('TJ')) + ' '}
                 </div>
               </div>
             </>
           )}
-
           <Divider
             style={{
               backgroundColor: 'white',
