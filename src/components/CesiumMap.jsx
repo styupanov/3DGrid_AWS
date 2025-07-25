@@ -1162,22 +1162,25 @@ const CesiumMap = () => {
               backgroundColor: 'white',
             }}
           />
-
-          <button
-            onClick={showParentFeature}
-            style={{
-              marginTop: '10px',
-              backgroundColor: '#0066cc',
-              border: 'none',
-              color: 'white',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              pointerEvents: 'auto'
-            }}
-          >
-            Show parent items
-          </button>
+          {selectedLevel === 5 ?
+            ''
+            :
+            <button
+              onClick={showParentFeature}
+              style={{
+                marginTop: '10px',
+                backgroundColor: '#0066cc',
+                border: 'none',
+                color: 'white',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                pointerEvents: 'auto'
+              }}
+            >
+              Show parent items
+            </button>
+          }
           <button
             onClick={async () => {
               if (selectedCellId && selectedCellLevel) {
@@ -1216,73 +1219,77 @@ const CesiumMap = () => {
           >
             Back to first one item
           </button>
-          <button
-            onClick={() => {
-              if (!renderedFeature || !selectedCellId) return
+          {selectedLevel === 1 ?
+            ''
+            :
+            <button
+              onClick={() => {
+                if (!renderedFeature || !selectedCellId) return
 
-              const level = parseInt(renderedFeature.getProperty('level'))
-              const current_cell_id = renderedFeature.getProperty('cell_id')
-              if (isNaN(level) || level <= 1) return
+                const level = parseInt(renderedFeature.getProperty('level'))
+                const current_cell_id = renderedFeature.getProperty('cell_id')
+                if (isNaN(level) || level <= 1) return
 
-              const newLevel = level - 1
+                const newLevel = level - 1
 
-              // Сброс текущей фичи
-              if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
-                try {
-                  selectedFeatureRef.current.color = Color.WHITE
-                } catch (e) {
-                  console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
+                // Сброс текущей фичи
+                if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
+                  try {
+                    selectedFeatureRef.current.color = Color.WHITE
+                  } catch (e) {
+                    console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
+                  }
+                  selectedFeatureRef.current = null
+                  setRenderedFeature(null)
                 }
-                selectedFeatureRef.current = null
-                setRenderedFeature(null)
-              }
 
-              setSelectedLevel(newLevel)
-              console.log('setSelectedLevel newLevel: ', newLevel)
-              loadTileset(newLevel).then(() => {
-                setTimeout(() => {
-                  const viewer = viewerRef.current
-                  const scene = viewer?.scene
+                setSelectedLevel(newLevel)
+                console.log('setSelectedLevel newLevel: ', newLevel)
+                loadTileset(newLevel).then(() => {
+                  setTimeout(() => {
+                    const viewer = viewerRef.current
+                    const scene = viewer?.scene
 
-                  const tileset = scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
-                  if (!tileset) return
+                    const tileset = scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
+                    if (!tileset) return
 
-                  const highlightChildren = (tile) => {
-                    if (tile.content?.featuresLength > 0) {
-                      // debugger
-                      for (let i = 0; i < tile.content.featuresLength; i++) {
-                        const feature = tile.content.getFeature(i)
-                        const parentId = feature.getProperty('parent_id')
-                        console.log('Feature::')
-                        console.log(current_cell_id.toString(), ' :current_cell_id:')
-                        console.log(parentId, ' :parentId')
-                        if (parentId === current_cell_id.toString()) {
-                          feature.color = Color.BLUE
-                        } else {
-                          feature.color = new Color(1, 1, 1, 0.05)
+                    const highlightChildren = (tile) => {
+                      if (tile.content?.featuresLength > 0) {
+                        // debugger
+                        for (let i = 0; i < tile.content.featuresLength; i++) {
+                          const feature = tile.content.getFeature(i)
+                          const parentId = feature.getProperty('parent_id')
+                          console.log('Feature::')
+                          console.log(current_cell_id.toString(), ' :current_cell_id:')
+                          console.log(parentId, ' :parentId')
+                          if (parentId === current_cell_id.toString()) {
+                            feature.color = Color.BLUE
+                          } else {
+                            feature.color = new Color(1, 1, 1, 0.05)
+                          }
                         }
                       }
+                      tile.children?.forEach(highlightChildren)
                     }
-                    tile.children?.forEach(highlightChildren)
-                  }
 
-                  highlightChildren(tileset.root)
-                }, 3000)
-              })
-            }}
-            style={{
-              marginTop: '8px',
-              backgroundColor: '#0066cc',
-              border: 'none',
-              color: 'white',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              pointerEvents: 'auto'
-            }}
-          >
-            Show children items
-          </button>
+                    highlightChildren(tileset.root)
+                  }, 3000)
+                })
+              }}
+              style={{
+                marginTop: '8px',
+                backgroundColor: '#0066cc',
+                border: 'none',
+                color: 'white',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                pointerEvents: 'auto'
+              }}
+            >
+              Show children items
+            </button>
+          }
         </div>
       )}
     </>
