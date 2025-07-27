@@ -40,7 +40,7 @@ const UI = ({
               filterCellId,
               showChildrenFilter,
               showParentFilter,
-              loadTileset,
+              routeInfo,
 }) => {
   const [searchId, setSearchId] = useState('')
   const [searchParentId, setSearchParentId] = useState('')
@@ -102,6 +102,10 @@ const UI = ({
     console.log('onUpdateFilterRanges sliderValues useEffect', sliderValues);
     onUpdateFilterRanges(sliderValues);
   }, [sliderValues, onUpdateFilterRanges]);
+
+  useEffect(() => {
+    setStartCell(routeInfo.startCell)
+  }, [routeInfo.startCell])
 
 
   const renderLegend = () => {
@@ -391,12 +395,24 @@ const UI = ({
           }}
         >
           <strong>Route Navigation</strong>
+          <Button
+            type="primary"
+            style={{ width: '100%', marginBottom: 5 }}
+            onClick={() => {
+              window.showStartsCells = true;
+              onRouteChange(
+                prev => ({ ...prev, showStartsCells: true }),
+              )
+            }}
+          >
+            Show Starts Cells
+          </Button>
           <div style={{ marginTop: 10 }}>
             <Select
               showSearch
               placeholder="Start Cell"
               style={{ width: '100%', marginBottom: 10 }}
-              value={startCell}
+              value={routeInfo.startCell ? routeInfo.startCell : startCell}
               onChange={(val) => {
                 setStartCell(val);
                 setFinishCell(null); // сбрасываем finish при смене start
@@ -404,6 +420,7 @@ const UI = ({
                   startCell: val,
                   finishCell: null,
                   routeCellIds: [],
+                  showStartsCells: true
                 });
               }}
               options={starts.map(s => ({ label: s, value: s }))}
@@ -423,6 +440,7 @@ const UI = ({
                   startCell,
                   finishCell: val,
                   routeCellIds: [],
+                  showStartsCells: true
                 });
               }}
               options={availableFinishes.map(f => ({ label: f, value: f }))}
@@ -446,6 +464,7 @@ const UI = ({
                     startCell,
                     finishCell,
                     routeCellIds: found.cell_id,
+                    showStartsCells: true
                   });
                 } else {
                   setRouteCellIds([]);
@@ -454,6 +473,7 @@ const UI = ({
                     startCell,
                     finishCell,
                     routeCellIds: [],
+                    showStartsCells: true
                   });
                 }
               }}
@@ -474,6 +494,7 @@ const UI = ({
                   startCell: null,
                   finishCell: null,
                   routeCellIds: [],
+                  showStartsCells: false,
                 });
               }}
             >
