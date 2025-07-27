@@ -1,3 +1,5 @@
+import { Cartesian3 } from 'cesium';
+
 const CONFIG = {
   1: {
     pc_build3d: ['0-1', '1-10', '10-20', '20-30', '30-40', '40-50', '50-65', '65-80', '88-95', '95-100'],
@@ -291,6 +293,80 @@ export const getLevelConfig = (level, property) => {
   }
 
   return lvlCfg;
+}
+
+export function flyToFeature(viewer, feature, selectedLevel, level) {
+  if (!viewer || !feature || typeof feature.getProperty !== 'function') {
+    console.warn('🤷‍♂️ Невалидные viewer или feature');
+    return;
+  }
+
+  console.log()
+
+  const lon = parseFloat(feature.getProperty('Longitude'));
+  const lat = parseFloat(feature.getProperty('Latitude'));
+  const height = parseFloat(feature.getProperty('Height') || 0);
+
+  if (isNaN(lon) || isNaN(lat)) {
+    console.warn('📉 Не удалось получить координаты фичи');
+    return;
+  }
+
+  const height_level = {
+    5: 50645,
+    4: 25089,
+    3: 2004,
+    2: 202,
+    1: 253,
+  }
+  // высота камеры от зума:
+  //
+  const levelOffsets = {
+    1: { offsetX: 0, offsetY: 0, offsetZ: -5000 },
+    2: { offsetX: 0, offsetY: 0, offsetZ: -8000 },
+    3: { offsetX: 0, offsetY: 0, offsetZ: -11000 },
+    4: { offsetX: 0, offsetY: 0, offsetZ: -13000 },
+    from5to4: { offsetX: 0, offsetY: 0, offsetZ: -22000 },
+    from4to3: { offsetX: 0, offsetY: 0, offsetZ: -2200 },
+    from3to2: { offsetX: 0, offsetY: 0, offsetZ: -200 },
+    from1to2: { offsetX: 0, offsetY: 0, offsetZ: -200 },
+    from2to3: { offsetX: 0, offsetY: 0, offsetZ: -2000 },
+    from3to4: { offsetX: 0, offsetY: 0, offsetZ: -22000 },
+    from4to5: { offsetX: 0, offsetY: 0, offsetZ: -50000 },
+  };
+
+  let offsets = {}
+
+  if(level && selectedLevel){
+    offsets = levelOffsets['from' + selectedLevel + 'to' + level]
+  } else {
+    offsets = { offsetX: 500, offsetY: 650, offsetZ: -500 }
+  }
+  level = level ?? 1;
+  offsets = levelOffsets['from' + selectedLevel + 'to' + level]
+
+  const {
+    offsetX,
+    offsetY,
+    offsetZ,
+    duration = 1.5
+  } = { ...offsets }
+
+  const target = Cartesian3.fromDegrees(lon, lat, height_level[level]);
+  const offset = new Cartesian3(offsetX, offsetY, offsetZ);
+  const destination = Cartesian3.add(target, offset, new Cartesian3());
+
+  viewer.camera.flyTo({
+    destination,
+    duration,
+    orientation: {
+      heading: viewer.camera.heading,
+      pitch: viewer.camera.pitch,
+      roll: viewer.camera.roll
+    }
+  });
+
+  console.log(`🛰️ Flying to feature at [${lon}, ${lat}, ${height}]`);
 }
 
 

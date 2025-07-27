@@ -7,11 +7,13 @@ import {
   ScreenSpaceEventType,
   Color,
   OpenStreetMapImageryProvider,
+  Ion,
+  createOsmBuildingsAsync
 } from 'cesium'
 import { useState, useEffect, useRef } from 'react'
 import UI from './UI'
 import {Divider} from 'antd';
-import {getLevelConfig} from '@/components/utils';
+import {flyToFeature, getLevelConfig} from '@/components/utils';
 import coords from '../successful_routes_start_fin_coords.json';
 const coordsMap = {};
 coords.forEach(item => {
@@ -58,6 +60,19 @@ const CesiumMap = () => {
     finishCell: null,
     routeCellIds: [],
   });
+  const [filterCellId, setFilterCellId] = useState(null)
+  const [showParentFilter, setShowParentFilter] = useState(false)
+  const [showChildrenFilter, setShowChildrenFilter] = useState(false)
+  const [showCells, setShowCells] = useState(true)
+  const [showedOsmBuildings, setShowOsmBuildings] = useState(true);
+  const osmBuildingsRef = useRef(null);
+  const timeout = {
+    5: 1000,
+    4: 1500,
+    3: 5000,
+    2: 6000,
+    1: 7000
+  }
 
   // const getBaseColor = () => {
   //   switch (selectedProperty) {
@@ -100,6 +115,18 @@ const CesiumMap = () => {
   //     }
   //   });
   // };
+  useEffect(() => {
+    if(showedOsmBuildings){
+      createOsmBuildingsAsync().then(buildings => {
+        osmBuildingsRef.current = buildings;
+        viewerRef.current.scene.primitives.add(buildings);
+      });
+    } else {
+        viewerRef.current.scene.primitives._primitives
+          .filter(p => p._url?.includes('OpenStreetMap'))
+          .forEach(p => viewerRef.current.scene.primitives.remove(p));
+      }
+  }, [showedOsmBuildings])
 
   const colorByType = () => {
     const viewer = viewerRef.current
@@ -147,6 +174,22 @@ const CesiumMap = () => {
     console.log(':::::BEFORE FILTERS:::::');
     console.log('activeProps:', filterProps);
     console.log('filterRanges:', filterRanges.pc_build3d);
+    tileset.show = showCells
+    console.log('osmBuildingsRef.current:: - ', osmBuildingsRef.current)
+    console.log('showedOsmBuildings:: - ', showedOsmBuildings)
+
+    // if (!osmBuildingsRef.current) {
+    //   createOsmBuildingsAsync().then(osm => {
+    //     osmBuildingsRef.current = osm;
+    //     viewer.scene.primitives.add(osm);
+    //     osm.show = true;
+    //     setShowOsmBuildings(true);
+    //   });
+    // } else {
+    //   const osm = osmBuildingsRef.current;
+    //   osm.show = !osm.show;
+    //   setShowOsmBuildings(osm.show);
+    // }
     // === 1. ФИЛЬТРАЦИЯ ===
     if (routeInfo?.routeCellIds?.length > 0) {
       console.log('// === ROUTE FILTER ===');
@@ -163,26 +206,45 @@ const CesiumMap = () => {
       };
 
       console.log(`[✓] Applied route filter: ${routeCondition}`);
-    } else if (filterProps) {
-      console.log('// === ACTIVE PROPS FILTER ===');
-      const filterConditions = filterProps.map(key => {
-        const [min, max] = filterRanges?.[key] || [0, 100];
-        return `\${${key}} >= ${min} && \${${key}} <= ${max}`;
-      });
-      // debugger
-      const combinedFilter = filterConditions.join(' && ');
-      const showConditions = [];
-      console.log('applyStyleToTileset selectedProperty: - ',selectedProperty)
-      if (selectedProperty) {
-        showConditions.push([`\${${selectedProperty}} === 0`, 'false']);
+    } else if ((filterCellId && (showParentFilter || showChildrenFilter)) || filterProps) {
+        console.log('// === COMBINED PARENT/CHILD + PROPS FILTER ===');
+
+        const combinedConditions = [];
+
+        // === 1. Parent/Child Condition
+        if (filterCellId && (showParentFilter || showChildrenFilter)) {
+          const comparisonKey = showParentFilter ? 'cell_id' : 'parent_id';
+          const hierarchyCondition = `\${${comparisonKey}} === '${filterCellId}'`;
+          combinedConditions.push(hierarchyCondition);
+          console.log(`[✓] Applied ${showParentFilter ? 'parent' : 'children'} filter on ${filterCellId}`);
+        }
+
+        // === 2. Property Ranges Condition
+        if (filterProps?.length > 0) {
+          const rangeConditions = filterProps.map(key => {
+            const [min, max] = filterRanges?.[key] || [0, 100];
+            return `\${${key}} >= ${min} && \${${key}} <= ${max}`;
+          });
+          const combinedRangeCondition = rangeConditions.join(' && ');
+          combinedConditions.push(combinedRangeCondition);
+          console.log(`[✓] Applied props filter: ${combinedRangeCondition}`);
+        }
+
+        // === 3. Сборка финального условия
+        const fullCondition = combinedConditions.join(' && ');
+        const showConditions = [];
+
+        if (selectedProperty) {
+          showConditions.push([`\${${selectedProperty}} === 0`, 'false']);
+        }
+
+        showConditions.push([fullCondition, 'true']);
+        showConditions.push(['true', 'false']); // fallback
+
+        style.show = { conditions: showConditions };
+        console.log('selectedLevel: ', selectedLevel);
+        console.log(`[✓] Final combined condition: ${fullCondition}`);
       }
-
-      showConditions.push([combinedFilter, 'true']);
-      showConditions.push(['true', 'false']); // fallback
-
-      style.show = { conditions: showConditions };
-      console.log(`[✓] Applied filter condition: ${combinedFilter} + no zero`);
-    }
 
     // === 2. РАСКРАСКА ===
     if (selectedProperty) {
@@ -234,9 +296,10 @@ const CesiumMap = () => {
       style.color = { conditions: colorConditions };
       console.log(`[✓] Applied color scheme for ${selectedProperty}`);
     }
-
     tileset.style = new Cesium.Cesium3DTileStyle(style);
   };
+
+
 
   // const applyFeatureFilter = (tileset) => {
   //   const props = Object.keys(filterProps).filter(key => filterProps[key])
@@ -282,13 +345,15 @@ const CesiumMap = () => {
   //   filterTile(tileset.root)
   // }
 
-  const loadTileset = async (level) => {
+  const loadTileset = async (level,current_cell_id) => {
 
     try {
       const viewer = viewerRef.current
       if (!viewer) throw new Error('Viewer is not initialized yet')
       setLoading(true)
-      viewer.scene.primitives.removeAll()
+      viewer.scene.primitives._primitives
+        .filter(p => p._url?.includes('https://s3-3d-tiles'))
+        .forEach(p => viewerRef.current.scene.primitives.remove(p));
 
       const tileset = await Cesium3DTileset.fromUrl(
         // `https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/lvl2_routing/tileset.json`
@@ -320,7 +385,13 @@ const CesiumMap = () => {
       tileset.foveatedTimeDelay = 0.2 // Задержка времени для фовеации
 
       viewer.scene.primitives.add(tileset)
-      await viewer.zoomTo(tileset)
+      if(!current_cell_id){
+        console.log('::New ChildrenParentFlow:: - loadTileset, I have filterCellId: - ', current_cell_id)
+        await viewer.zoomTo(tileset)
+      }
+
+      const height = viewer.scene.camera.positionCartographic.height;
+      console.log('📏 Высота камеры:', height);
       console.log('::loadTileset:: level - ', level)
       //FIXME в applyStyleToTileset Передавай LEvel
       console.log('::loadTileset:: selectedLevel - ', selectedLevel)
@@ -335,61 +406,7 @@ const CesiumMap = () => {
     }
   }
 
-  const showParentFeature = () => {
-    if (!renderedFeature) return
-    const parentId = renderedFeature.getProperty('parent_id')
-    const level = parseInt(renderedFeature.getProperty('level'))
 
-    if (!parentId || isNaN(level)) {
-      console.warn('Нет данных о родителе или уровне.')
-      return
-    }
-
-    const newLevel = level + 1
-
-    // Сброс текущего
-    if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
-      try {
-        selectedFeatureRef.current.color = Color.WHITE
-      } catch (e) {
-        console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
-      }
-      selectedFeatureRef.current = null
-      setRenderedFeature(null)
-    }
-
-    setSelectedLevel(newLevel)
-
-    loadTileset(newLevel).then(() => {
-      setTimeout(() => {
-        const viewer = viewerRef.current
-        const scene = viewer?.scene
-
-        const tileset = scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
-        if (!tileset) return
-
-        const highlightTile = (tile) => {
-          if (tile.content?.featuresLength > 0) {
-            for (let i = 0; i < tile.content.featuresLength; i++) {
-              const feature = tile.content.getFeature(i)
-              const cellId = feature.getProperty('cell_id')
-
-              if (cellId === parentId.toString()) {
-                feature.color = Color.BLUE
-                selectedFeatureRef.current = feature
-                setRenderedFeature(feature)
-              } else {
-                feature.color = new Color(1, 1, 1, 0.05) // полупрозрачный
-              }
-            }
-          }
-          tile.children?.forEach(highlightTile)
-        }
-
-        highlightTile(tileset.root)
-      }, 500)
-    })
-  }
 
   const handleSearch = (searchId, isParentSearch = false, color = Color.BLUE) => {
     const viewer = viewerRef.current
@@ -420,6 +437,7 @@ const CesiumMap = () => {
               setRenderedFeature(feature)
               setSelectedCellId(searchId)
               setSelectedCellLevel(feature.getProperty('level'))
+              // flyToFeature(viewer, feature)
               const lon = parseFloat(feature.getProperty('Longitude'));
               const lat = parseFloat(feature.getProperty('Latitude'));
               const height = parseFloat(feature.getProperty('Height') || 0);
@@ -488,6 +506,7 @@ const CesiumMap = () => {
   }, [isDragging, dragOffset])
 
   useEffect(() => {
+    Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3YmUwZmQyZi0xMTZmLTQ0YzgtYmY5NS0wNmU1OTM1Y2M5M2YiLCJpZCI6MzI1MDEwLCJpYXQiOjE3NTM0MjI1MzV9.-uImTS0_4uarVz2IKXv7yNRDxYxTmkh4DudgfYJ21xE';
 
     const viewer = new Viewer('cesiumContainer', {
       baseLayerPicker: true,
@@ -500,7 +519,12 @@ const CesiumMap = () => {
     })
 
     viewerRef.current = viewer
-
+    // if (!osmBuildingsRef.current) {
+    //   createOsmBuildingsAsync().then(buildings => {
+    //     osmBuildingsRef.current = buildings;
+    //     viewer.scene.primitives.add(buildings);
+    //   });
+    // }
     viewer.imageryLayers.addImageryProvider(
       new OpenStreetMapImageryProvider({
         url: 'https://a.tile.openstreetmap.org/'
@@ -633,17 +657,20 @@ const CesiumMap = () => {
     console.log('!!!!!!!!!!!!!!!viewer', viewer)
     if (!viewer) return
 
+    const condition = viewer.scene.primitives._primitives.filter(p => p._url?.includes('https://s3-3d-tiles')).length
 
     setTimeout(
       () => {
-        const tileset = viewer.scene.primitives._primitives.find(p => p instanceof Cesium3DTileset);
+        const tileset = viewer.scene.primitives._primitives.find(p => p._url?.includes('https://s3-3d-tiles'))
+        if(!tileset){return}
         console.log('!!!!!!!!!!!!!!!tileset', tileset)
         console.log('!!!!!!!!!!!!!!!applyStyleToTileset at useEffect')
         applyStyleToTileset(tileset)},
-      1000)
+      timeout[selectedLevel])
+
 
     // applyFilterToTileset(tileset, );
-  }, [filterProps, filterRanges, selectedProperty, routeInfo, selectedLevel]);
+  }, [filterProps, filterRanges, selectedProperty, routeInfo, selectedLevel, showCells, filterCellId]);
 
   // useEffect(() => {
   //   const viewer = viewerRef.current;
@@ -728,6 +755,17 @@ const CesiumMap = () => {
         selectedProperty={selectedProperty}
         setSelectedProperty={setSelectedProperty}
         onRouteChange={setRouteInfo}
+        setShowCells={setShowCells}
+        showCells={showCells}
+        showedOsmBuildings={showedOsmBuildings}
+        setShowOsmBuildings={setShowOsmBuildings}
+        setFilterCellId={setFilterCellId}
+        setShowParentFilter={setShowParentFilter}
+        setShowChildrenFilter={setShowChildrenFilter}
+        filterCellId={filterCellId}
+        showChildrenFilter={showChildrenFilter}
+        showParentFilter={showParentFilter}
+        loadTileset={loadTileset}
       />
       {renderedFeature && (
         <div
@@ -1166,7 +1204,36 @@ const CesiumMap = () => {
             ''
             :
             <button
-              onClick={showParentFeature}
+              onClick={() => {
+                const viewer = viewerRef.current
+                if (!renderedFeature) return
+                const parentId = renderedFeature.getProperty('parent_id')
+                const level = parseInt(renderedFeature.getProperty('level'))
+
+                if (!parentId || isNaN(level)) {
+                  console.warn('Нет данных о родителе или уровне.')
+                  return
+                }
+
+                const newLevel = level + 1
+
+                // Сброс текущего
+                if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
+                  try {
+                    selectedFeatureRef.current.color = Color.WHITE
+                  } catch (e) {
+                    console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
+                  }
+                  selectedFeatureRef.current = null
+                  setRenderedFeature(null)
+                }
+                flyToFeature(viewer, renderedFeature, selectedLevel, newLevel)
+                setSelectedLevel(newLevel)
+                setFilterCellId(parentId)
+                setShowParentFilter(true)
+                setShowChildrenFilter(false)
+                loadTileset(newLevel, parentId)
+              }}
               style={{
                 marginTop: '10px',
                 backgroundColor: '#0066cc',
@@ -1181,49 +1248,54 @@ const CesiumMap = () => {
               Show parent items
             </button>
           }
-          <button
-            onClick={async () => {
-              if (selectedCellId && selectedCellLevel) {
-                // Сброс текущей фичи
-                if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
-                  try {
-                    selectedFeatureRef.current.color = Color.WHITE
-                  } catch (e) {
-                    console.warn('Не удалось сбросить цвет предыдущей фичи:', e)
-                  }
-                  selectedFeatureRef.current = null
-                  setRenderedFeature(null)
-                }
+          {/*<button*/}
+          {/*  onClick={async () => {*/}
+          {/*    setFilterCellId(null)*/}
+          {/*    setShowParentFilter(false)*/}
+          {/*    setShowChildrenFilter(false)*/}
 
-                const newLevel = parseInt(selectedCellLevel)
-                setSelectedLevel(newLevel)
-                console.log('newLevel: ', newLevel)
-                await loadTileset(newLevel)
-                setTimeout(() => {
-                  handleSearch(selectedCellId)
-                }, 500)
-              }
-            }}
-            disabled={renderedFeature?.getProperty('cell_id') === selectedCellId}
-            style={{
-              marginTop: '8px',
-              backgroundColor: renderedFeature?.getProperty('cell_id') === selectedCellId ? '#999' : '#00aa88',
-              border: 'none',
-              color: 'white',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              cursor: renderedFeature?.getProperty('cell_id') === selectedCellId ? 'default' : 'pointer',
-              pointerEvents: 'auto',
-              opacity: renderedFeature?.getProperty('cell_id') === selectedCellId ? 0.6 : 1
-            }}
-          >
-            Back to first one item
-          </button>
-          {selectedLevel === 1 ?
+          {/*    if (selectedCellId && selectedCellLevel) {*/}
+          {/*      // Сброс текущей фичи*/}
+          {/*      if (selectedFeatureRef.current && selectedFeatureRef.current.color) {*/}
+          {/*        try {*/}
+          {/*          selectedFeatureRef.current.color = Color.WHITE*/}
+          {/*        } catch (e) {*/}
+          {/*          console.warn('Не удалось сбросить цвет предыдущей фичи:', e)*/}
+          {/*        }*/}
+          {/*        selectedFeatureRef.current = null*/}
+          {/*        setRenderedFeature(null)*/}
+          {/*      }*/}
+
+          {/*      const newLevel = parseInt(selectedCellLevel)*/}
+          {/*      setSelectedLevel(newLevel)*/}
+          {/*      console.log('newLevel: ', newLevel)*/}
+          {/*      await loadTileset(newLevel)*/}
+          {/*      // setTimeout(() => {*/}
+          {/*      //   handleSearch(selectedCellId)*/}
+          {/*      // }, 500)*/}
+          {/*    }*/}
+          {/*  }}*/}
+          {/*  disabled={renderedFeature?.getProperty('cell_id') === selectedCellId}*/}
+          {/*  style={{*/}
+          {/*    marginTop: '8px',*/}
+          {/*    backgroundColor: renderedFeature?.getProperty('cell_id') === selectedCellId ? '#999' : '#00aa88',*/}
+          {/*    border: 'none',*/}
+          {/*    color: 'white',*/}
+          {/*    padding: '6px 12px',*/}
+          {/*    borderRadius: '4px',*/}
+          {/*    cursor: renderedFeature?.getProperty('cell_id') === selectedCellId ? 'default' : 'pointer',*/}
+          {/*    pointerEvents: 'auto',*/}
+          {/*    opacity: renderedFeature?.getProperty('cell_id') === selectedCellId ? 0.6 : 1*/}
+          {/*  }}*/}
+          {/*>*/}
+          {/*  Back to first one item*/}
+          {/*</button>*/}
+          {selectedLevel === 1 || selectedLevel === 2 ?
             ''
             :
             <button
               onClick={() => {
+                const viewer = viewerRef.current
                 if (!renderedFeature || !selectedCellId) return
 
                 const level = parseInt(renderedFeature.getProperty('level'))
@@ -1245,36 +1317,14 @@ const CesiumMap = () => {
 
                 setSelectedLevel(newLevel)
                 console.log('setSelectedLevel newLevel: ', newLevel)
-                loadTileset(newLevel).then(() => {
-                  setTimeout(() => {
-                    const viewer = viewerRef.current
-                    const scene = viewer?.scene
 
-                    const tileset = scene.primitives._primitives.find(p => p instanceof Cesium3DTileset)
-                    if (!tileset) return
-
-                    const highlightChildren = (tile) => {
-                      if (tile.content?.featuresLength > 0) {
-                        // debugger
-                        for (let i = 0; i < tile.content.featuresLength; i++) {
-                          const feature = tile.content.getFeature(i)
-                          const parentId = feature.getProperty('parent_id')
-                          console.log('Feature::')
-                          console.log(current_cell_id.toString(), ' :current_cell_id:')
-                          console.log(parentId, ' :parentId')
-                          if (parentId === current_cell_id.toString()) {
-                            feature.color = Color.BLUE
-                          } else {
-                            feature.color = new Color(1, 1, 1, 0.05)
-                          }
-                        }
-                      }
-                      tile.children?.forEach(highlightChildren)
-                    }
-
-                    highlightChildren(tileset.root)
-                  }, 3000)
-                })
+                console.log('::New ChildrenParentFlow:: - Click  Show children items, filterCellId: - ', current_cell_id)
+                flyToFeature(viewer, renderedFeature, selectedLevel, newLevel)
+                setSelectedLevel(newLevel)
+                setFilterCellId(current_cell_id)
+                setShowParentFilter(false)
+                setShowChildrenFilter(true)
+                loadTileset(newLevel, current_cell_id)
               }}
               style={{
                 marginTop: '8px',

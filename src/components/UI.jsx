@@ -29,7 +29,18 @@ const UI = ({
               onUpdateFilterRanges,
               selectedProperty,
               setSelectedProperty,
-              onRouteChange
+              onRouteChange,
+              setShowCells,
+              showCells,
+              showedOsmBuildings,
+              setShowOsmBuildings,
+              setFilterCellId,
+              setShowParentFilter,
+              setShowChildrenFilter,
+              filterCellId,
+              showChildrenFilter,
+              showParentFilter,
+              loadTileset,
 }) => {
   const [searchId, setSearchId] = useState('')
   const [searchParentId, setSearchParentId] = useState('')
@@ -233,7 +244,37 @@ const UI = ({
             }}
           >
             <div style={{ marginBottom: 10 }}>
-              <strong>Cell size level</strong>
+              <Button
+                type="primary"
+                onClick={() => {
+                  setShowParentFilter(false)
+                  setShowChildrenFilter(false)
+                  setFilterCellId(null)
+                }}
+                disabled={!filterCellId}
+              >
+                { showParentFilter === false && showChildrenFilter === false ? 'Parent or Children not selected' :
+                  showParentFilter ? 'Cancel Parent Select' : 'Cancel Children Select'
+                }
+              </Button>
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Button
+                  type="primary"
+                  onClick={() => setShowOsmBuildings(prev => !prev)}
+                >
+                  {showedOsmBuildings ? 'Hide Buildings' : 'Show Buildings'}
+                </Button>
+
+                <Button
+                  type="primary"
+                  onClick={() => setShowCells(prev => !prev)}
+                >
+                  {showCells ? 'Hide Tileset' : 'Show Tileset'}
+                </Button>
+              </div>
+              <strong style={{ alignSelf: 'end'}}>Cell size level</strong>
               <Select
                 value={activeLevels}
                 onChange={(value) => onToggleLevel(value)}
@@ -299,7 +340,7 @@ const UI = ({
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
                 onSearch={() => onSearch(searchId)}
-                onKeyDown={(e) => handleKeyDown(e, false)}
+                // onKeyDown={(e) => handleKeyDown(e, false)}
                 placeholder="Enter ID..."
                 enterButton
                 style={{ marginTop: 5 }}
@@ -312,7 +353,7 @@ const UI = ({
                 value={searchParentId}
                 onChange={(e) => setSearchParentId(e.target.value)}
                 onSearch={() => onSearch(searchParentId, true)}
-                onKeyDown={(e) => handleKeyDown(e, true)}
+                // onKeyDown={(e) => handleKeyDown(e, true)}
                 placeholder="Enter Parent ID..."
                 enterButton
                 style={{ marginTop: 5 }}
@@ -338,7 +379,7 @@ const UI = ({
         <div
           style={{
             position: 'absolute',
-            top: 20,
+            top: 45,
             right: 20,
             zIndex: 999,
             minWidth: 250,
