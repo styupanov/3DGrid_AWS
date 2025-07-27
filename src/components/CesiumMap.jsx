@@ -20,6 +20,9 @@ coords.forEach(item => {
   coordsMap[item.Cell_id] = { lat: item.lat, lon: item.lon };
 });
 
+Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3YmUwZmQyZi0xMTZmLTQ0YzgtYmY5NS0wNmU1OTM1Y2M5M2YiLCJpZCI6MzI1MDEwLCJpYXQiOjE3NTM0MjI1MzV9.-uImTS0_4uarVz2IKXv7yNRDxYxTmkh4DudgfYJ21xE';
+
+
 const CesiumMap = () => {
   const viewerRef = useRef()
   const [cameraHeight, setCameraHeight] = useState(0)
@@ -122,10 +125,10 @@ const CesiumMap = () => {
         viewerRef.current.scene.primitives.add(buildings);
       });
     } else {
-        viewerRef.current.scene.primitives._primitives
-          .filter(p => p._url?.includes('OpenStreetMap'))
-          .forEach(p => viewerRef.current.scene.primitives.remove(p));
-      }
+      viewerRef.current?.scene.primitives._primitives
+        .filter(p => p._url?.includes('OpenStreetMap'))
+        .forEach(p => viewerRef.current.scene.primitives.remove(p));
+    }
   }, [showedOsmBuildings])
 
   const colorByType = () => {
@@ -506,7 +509,6 @@ const CesiumMap = () => {
   }, [isDragging, dragOffset])
 
   useEffect(() => {
-    Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3YmUwZmQyZi0xMTZmLTQ0YzgtYmY5NS0wNmU1OTM1Y2M5M2YiLCJpZCI6MzI1MDEwLCJpYXQiOjE3NTM0MjI1MzV9.-uImTS0_4uarVz2IKXv7yNRDxYxTmkh4DudgfYJ21xE';
 
     const viewer = new Viewer('cesiumContainer', {
       baseLayerPicker: true,
@@ -515,7 +517,7 @@ const CesiumMap = () => {
       selectionIndicator: false,
       timeline: false,
       animation: false,
-      creditContainer: document.createElement('div')
+      creditContainer: document.createElement('div'),
     })
 
     viewerRef.current = viewer
