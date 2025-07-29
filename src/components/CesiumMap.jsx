@@ -63,6 +63,7 @@ const CesiumMap = () => {
   });
   const [selectedProperty, setSelectedProperty] = useState('pc_build3d');
   const [loading, setLoading] = useState(false)
+  const [calculating, setCalculating] = useState(false)
   const [routeInfo, setRouteInfo] = useState({
     startCell: null,
     finishCell: null,
@@ -205,10 +206,9 @@ const CesiumMap = () => {
     console.log('routeInfo?.showStartsCells: - ', routeInfo.showStartsCells);
     if (routeInfo?.routeCellIds?.length > 0 || window.showStartsCells) {
       console.log('// === ROUTE OR START CELLS FILTER ===');
+      console.log('tileset.style: - ', tileset.style);
 
-debugger
       if(routeInfo?.routeCellIds?.length > 0) {
-        debugger
         const idsSet = new Set([
           ...(routeInfo.routeCellIds || [])
         ]);
@@ -224,12 +224,20 @@ debugger
           ]
         };
       } else {
-        style.show = {
-          conditions: [
-            [start_cell_filter, 'true'],
-            ['true', 'false']
-          ]
-        };
+        if(routeInfo?.routeCellIds?.length > 0 || routeInfo?.startCell) {
+          console.log('// === ROUTE OR START CELLS ===');
+          console.log('routeInfo?.routeCellIds: - ',routeInfo?.routeCellIds);
+          console.log('routeInfo?.startCell: - ',routeInfo?.startCell);
+          setCalculating(false)
+          return;
+        } else {
+          style.show = {
+            conditions: [
+              [start_cell_filter, 'true'],
+              ['true', 'false']
+            ]
+          };
+        }
       }
       // const idsSet = new Set([
       //   ...(routeInfo.routeCellIds || []),
@@ -338,7 +346,9 @@ debugger
       style.color = { conditions: colorConditions };
       console.log(`[✓] Applied color scheme for ${selectedProperty}`);
     }
+
     tileset.style = new Cesium.Cesium3DTileStyle(style);
+    setCalculating(false)
   };
 
 
@@ -714,7 +724,7 @@ debugger
     if (!viewer) return
 
     const condition = viewer.scene.primitives._primitives.filter(p => p._url?.includes('https://s3-3d-tiles')).length
-
+    setCalculating(true)
     setTimeout(
       () => {
         const tileset = viewer.scene.primitives._primitives.find(p => p._url?.includes('https://s3-3d-tiles'))
@@ -753,6 +763,21 @@ debugger
 
   return (
     <>
+      {calculating && (
+        <div style={{
+          position: 'absolute',
+          top: '40%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '20px 40px',
+          borderRadius: '8px',
+          zIndex: 2000
+        }}>
+          Thank You for waiting. Calculating...
+        </div>
+      )}
       {loading && (
         <div style={{
           position: 'absolute',

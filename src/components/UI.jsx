@@ -500,6 +500,24 @@ const UI = ({
             >
               Clear Route
             </Button>
+            <Button
+              type="default"
+              danger
+              style={{ width: '100%', marginTop: 5 }}
+              onClick={() => {
+                window.showStartsCells = false
+                onRouteChange(
+                  {
+                    startCell: null,
+                    finishCell: null,
+                    routeCellIds: [],
+                    showStartsCells: false,
+                  }
+                )
+              }}
+            >
+              Hide Starts Cells
+            </Button>
           </div>
         </div>
       )}
