@@ -351,18 +351,18 @@ const UI = ({
               />
             </div>
 
-            <div style={{ marginTop: 10, marginBottom: 20 }}>
-              <strong>Search by Parent Cell ID</strong>
-              <Input.Search
-                value={searchParentId}
-                onChange={(e) => setSearchParentId(e.target.value)}
-                onSearch={() => onSearch(searchParentId, true)}
-                // onKeyDown={(e) => handleKeyDown(e, true)}
-                placeholder="Enter Parent ID..."
-                enterButton
-                style={{ marginTop: 5 }}
-              />
-            </div>
+            {/*<div style={{ marginTop: 10, marginBottom: 20 }}>*/}
+            {/*  <strong>Search by Parent Cell ID</strong>*/}
+            {/*  <Input.Search*/}
+            {/*    value={searchParentId}*/}
+            {/*    onChange={(e) => setSearchParentId(e.target.value)}*/}
+            {/*    onSearch={() => onSearch(searchParentId, true)}*/}
+            {/*    // onKeyDown={(e) => handleKeyDown(e, true)}*/}
+            {/*    placeholder="Enter Parent ID..."*/}
+            {/*    enterButton*/}
+            {/*    style={{ marginTop: 5 }}*/}
+            {/*  />*/}
+            {/*</div>*/}
 
           </div>
         </div>
