@@ -22,8 +22,7 @@ const coordsMap = {};
 coords.forEach(item => {
   coordsMap[item.Cell_id] = { lat: item.lat, lon: item.lon };
 });
-// import routes from 'https://s3-3d-tiles.s3.eu-north-1.amazonaws.com/routes.json'
-// window.routes = routes;
+
 const start_cell_filter = '${route_cell_id} >= 1 && ${route_cell_id} <= 328'
 const all_cell_filter = '${route_cell_id} >= 1 && ${route_cell_id} <= 200000'
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3YmUwZmQyZi0xMTZmLTQ0YzgtYmY5NS0wNmU1OTM1Y2M5M2YiLCJpZCI6MzI1MDEwLCJpYXQiOjE3NTM0MjI1MzV9.-uImTS0_4uarVz2IKXv7yNRDxYxTmkh4DudgfYJ21xE';
