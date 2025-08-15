@@ -409,6 +409,7 @@ const UI = ({
           </Button>
           <div style={{ marginTop: 10 }}>
             <Select
+              disabled={true}
               showSearch
               placeholder="Start Cell"
               style={{ width: '100%', marginBottom: 10 }}
@@ -431,9 +432,10 @@ const UI = ({
             />
 
             <Select
+              disabled={true}
               placeholder="Finish Cell"
               style={{ width: '100%', marginBottom: 10 }}
-              value={finishCell}
+              value={routeInfo.finishCell ? routeInfo.finishCell : finishCell}
               onChange={(val) => {
                 setFinishCell(val);
                 onRouteChange({
@@ -449,35 +451,52 @@ const UI = ({
             <Button
               type="primary"
               style={{ width: '100%', marginBottom: 5 }}
-              onClick={() => {
-                const found = data.find(
-                  (item) =>
-                    item.start_finish &&
-                    item.start_finish[0] === startCell &&
-                    item.start_finish[1] === finishCell
-                );
+              onClick={async () => {
+                try {
+                  const res = await fetch(
+                    'https://a80kcz8tm1.execute-api.eu-north-1.amazonaws.com/prod_routing/route',
+                    {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        start_cell: routeInfo.start_route_cell_id,
+                        finish_cell: routeInfo.finish_route_cell_id,
+                      }),
+                    }
+                  );
 
-                if (found && found.cell_id) {
-                  setRouteCellIds(found.cell_id);
-                  console.log('Found cell_id:', found.cell_id);
+                  if (!res.ok) {
+                    throw new Error(`API returned status ${res.status}`);
+                  }
+
+                  const ids = await res.json(); // ожидаем массив id
+                  console.log('Route IDs from API:', ids);
+
+                  setRouteCellIds(ids);
                   onRouteChange({
-                    startCell,
-                    finishCell,
-                    routeCellIds: found.cell_id,
-                    showStartsCells: true
+                    start_route_cell_id: routeInfo.start_route_cell_id,
+                    finish_route_cell: routeInfo.finish_route_cell_id,
+                    startCell: routeInfo.startCell,
+                    finishCell: routeInfo.finishCell,
+                    routeCellIds: ids,
+                    showStartsCells: true,
                   });
-                } else {
+                } catch (err) {
+                  console.error('Error fetching route:', err);
                   setRouteCellIds([]);
-                  console.log('No matching route found.');
                   onRouteChange({
-                    startCell,
-                    finishCell,
+                    start_route_cell_id: routeInfo.start_route_cell_id,
+                    finish_route_cell: routeInfo.finish_route_cell_id,
+                    startCell: routeInfo.startCell,
+                    finishCell: routeInfo.finishCell,
                     routeCellIds: [],
-                    showStartsCells: true
+                    showStartsCells: true,
                   });
                 }
               }}
-              disabled={!startCell || !finishCell}
+              disabled={!routeInfo.startCell || !routeInfo.finishCell}
             >
               Create Route
             </Button>
@@ -491,10 +510,12 @@ const UI = ({
                 setRouteCellIds([]);
                 console.log('Route cleared');
                 onRouteChange({
+                  start_route_cell_id: null,
+                  finish_route_cell: null,
                   startCell: null,
                   finishCell: null,
                   routeCellIds: [],
-                  showStartsCells: false,
+                  showStartsCells: true,
                 });
               }}
             >
