@@ -948,14 +948,15 @@ const CesiumMap = () => {
       />
       {renderedFeature && (
         <div
-          className={'scrollable-content'}
+          // className={'glass'}
+          className={'scrollable-content glass'}
           style={{
             position: 'absolute',
             top: `${popupPosition.y}px`,
             left: `${popupPosition.x}px`,
             // transform: 'translate(-50%, -100%)',
-            backgroundColor: 'rgba(0, 0, 50, 0.85)',
-            color: 'white',
+            // backgroundColor: 'rgba(0, 0, 50, 0.85)',
+            color: 'black',
             padding: '12px',
             borderRadius: '8px',
             zIndex: 1000,
@@ -967,6 +968,7 @@ const CesiumMap = () => {
           }}
         >
           <div
+
             style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -993,7 +995,7 @@ const CesiumMap = () => {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'white',
+                color: 'black',
                 fontSize: '16px',
                 cursor: 'pointer',
                 pointerEvents: 'auto'
@@ -1065,7 +1067,7 @@ const CesiumMap = () => {
                       cursor: 'pointer',
                       backgroundColor: 'transparent',
                       border: '1px solid white',
-                      color: 'white',
+                      color: 'black',
                       fontSize: '12px',
                       padding: '2px 6px',
                       borderRadius: '4px'
@@ -1102,7 +1104,7 @@ const CesiumMap = () => {
                       cursor: 'pointer',
                       backgroundColor: 'transparent',
                       border: '1px solid white',
-                      color: 'white',
+                      color: 'black',
                       fontSize: '12px',
                       padding: '2px 6px',
                       borderRadius: '4px'
@@ -1139,7 +1141,7 @@ const CesiumMap = () => {
                       cursor: 'pointer',
                       backgroundColor: 'transparent',
                       border: '1px solid white',
-                      color: 'white',
+                      color: 'black',
                       fontSize: '12px',
                       padding: '2px 6px',
                       borderRadius: '4px'
@@ -1176,7 +1178,7 @@ const CesiumMap = () => {
                       cursor: 'pointer',
                       backgroundColor: 'transparent',
                       border: '1px solid white',
-                      color: 'white',
+                      color: 'black',
                       fontSize: '12px',
                       padding: '2px 6px',
                       borderRadius: '4px'
@@ -1213,7 +1215,7 @@ const CesiumMap = () => {
                       cursor: 'pointer',
                       backgroundColor: 'transparent',
                       border: '1px solid white',
-                      color: 'white',
+                      color: 'black',
                       fontSize: '12px',
                       padding: '2px 6px',
                       borderRadius: '4px'
@@ -1417,7 +1419,7 @@ const CesiumMap = () => {
                 marginTop: '10px',
                 backgroundColor: '#0066cc',
                 border: 'none',
-                color: 'white',
+                color: 'black',
                 padding: '6px 12px',
                 borderRadius: '4px',
                 cursor: 'pointer',
@@ -1509,7 +1511,7 @@ const CesiumMap = () => {
                 marginTop: '8px',
                 backgroundColor: '#0066cc',
                 border: 'none',
-                color: 'white',
+                color: 'black',
                 padding: '6px 12px',
                 borderRadius: '4px',
                 cursor: 'pointer',
