@@ -794,14 +794,27 @@ const CesiumMap = () => {
 
     const condition = viewer.scene.primitives._primitives.filter(p => p._url?.includes('https://s3-3d-tiles')).length
     setCalculating(true)
-    setTimeout(
-      () => {
+    if(selectedLevel === 2 && routeInfo.showStartsCells){
+      setTimeout(
+        () => {
         const tileset = viewer.scene.primitives._primitives.find(p => p._url?.includes('https://s3-3d-tiles'))
         if(!tileset){return}
         console.log('!!!!!!!!!!!!!!!tileset', tileset)
         console.log('!!!!!!!!!!!!!!!applyStyleToTileset at useEffect')
         applyStyleToTileset(tileset)},
-      timeout[selectedLevel])
+        1500)
+
+    } else {
+      setTimeout(
+        () => {
+          const tileset = viewer.scene.primitives._primitives.find(p => p._url?.includes('https://s3-3d-tiles'))
+          if(!tileset){return}
+          console.log('!!!!!!!!!!!!!!!tileset', tileset)
+          console.log('!!!!!!!!!!!!!!!applyStyleToTileset at useEffect')
+          applyStyleToTileset(tileset)},
+        timeout[selectedLevel])
+    }
+
 
 
     // applyFilterToTileset(tileset, );
@@ -833,35 +846,49 @@ const CesiumMap = () => {
   return (
     <>
       {calculating && (
-        <div style={{
-          position: 'absolute',
-          top: '40%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          padding: '20px 40px',
-          borderRadius: '8px',
-          zIndex: 2000
-        }}>
-          Thank You for waiting. Calculating...
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0, // shorthand: top:0, right:0, bottom:0, left:0
+            background: 'rgba(0,0,0,0.7)',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            opacity: 1,
+            transition: 'opacity 0.5s ease', // плавный переход для затемнения
+          }}
+        >
+          <div
+            style={{
+              fontSize: '1.5rem',
+              background: 'rgba(255,255,255,0.1)',
+              padding: '20px 40px',
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(4px)', // легкий блюр заднего фона
+            }}
+          >
+            Thank You for waiting. Calculating...
+          </div>
         </div>
       )}
-      {loading && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          padding: '20px 40px',
-          borderRadius: '8px',
-          zIndex: 2000
-        }}>
-          Загрузка тайлсета...
-        </div>
-      )}
+      {/*{loading && (*/}
+      {/*  <div style={{*/}
+      {/*    position: 'absolute',*/}
+      {/*    top: '50%',*/}
+      {/*    left: '50%',*/}
+      {/*    transform: 'translate(-50%, -50%)',*/}
+      {/*    background: 'rgba(0,0,0,0.7)',*/}
+      {/*    color: 'white',*/}
+      {/*    padding: '20px 40px',*/}
+      {/*    borderRadius: '8px',*/}
+      {/*    zIndex: 2000*/}
+      {/*  }}>*/}
+      {/*    Загрузка тайлсета...*/}
+      {/*  </div>*/}
+      {/*)}*/}
       {searching && (
         <div style={{
           position: 'absolute',
@@ -917,6 +944,7 @@ const CesiumMap = () => {
         showChildrenFilter={showChildrenFilter}
         showParentFilter={showParentFilter}
         loadTileset={loadTileset}
+        setCalculating={setCalculating}
       />
       {renderedFeature && (
         <div

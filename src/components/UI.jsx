@@ -41,6 +41,7 @@ const UI = ({
               showChildrenFilter,
               showParentFilter,
               routeInfo,
+              setCalculating,
 }) => {
   const [searchId, setSearchId] = useState('')
   const [searchParentId, setSearchParentId] = useState('')
@@ -151,7 +152,8 @@ const UI = ({
     };
 
     return (
-      <div style={{
+      <div className={'glass'}
+        style={{
         position: 'fixed',
         bottom: '10px',
         backgroundColor: 'white',
@@ -219,6 +221,7 @@ const UI = ({
       }}
     >
       <Card
+        className={'glass'}
         title="Display properties"
         style={{
           position: 'absolute',
@@ -373,7 +376,7 @@ const UI = ({
             onClick={() => setCollapsed(!collapsed)}
           />
         </div>
-        {renderLegend()}
+
       </Card>
 
       <ConfigProvider>
@@ -381,9 +384,10 @@ const UI = ({
       </ConfigProvider>
       {activeLevels === 2 && (
         <div
+          className={'glass'}
           style={{
             position: 'absolute',
-            top: 45,
+            top: 60,
             right: 20,
             zIndex: 999,
             minWidth: 250,
@@ -394,7 +398,12 @@ const UI = ({
             boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
           }}
         >
-          <strong>Route Navigation</strong>
+          <strong
+            style={{
+              marginBottom: '10px',
+              display: 'block'
+            }}
+          >Route Navigation</strong>
           <Button
             type="primary"
             style={{ width: '100%', marginBottom: 5 }}
@@ -452,6 +461,7 @@ const UI = ({
               type="primary"
               style={{ width: '100%', marginBottom: 5 }}
               onClick={async () => {
+                setCalculating(true);
                 try {
                   const res = await fetch(
                     'https://a80kcz8tm1.execute-api.eu-north-1.amazonaws.com/prod_routing/route',
@@ -542,6 +552,7 @@ const UI = ({
           </div>
         </div>
       )}
+      {renderLegend()}
     </ConfigProvider>
   )
 }
