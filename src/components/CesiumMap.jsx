@@ -346,7 +346,7 @@ const CesiumMap = () => {
       }
 
       colorConditions.push(['true', 'color("rgba(0,0,0,0)")']); // fallback
-      if(routeInfo.showStartsCells) {
+      if(window.showStartsCells) {
         style.color = {
           conditions: [
             // старт — зелёный
@@ -807,6 +807,7 @@ const CesiumMap = () => {
     } else {
       setTimeout(
         () => {
+          if(!viewer.scene){return;}
           const tileset = viewer.scene.primitives._primitives.find(p => p._url?.includes('https://s3-3d-tiles'))
           if(!tileset){return}
           console.log('!!!!!!!!!!!!!!!tileset', tileset)
@@ -907,6 +908,15 @@ const CesiumMap = () => {
       <div id="cesiumContainer" style={{ width: '100%', height: '100vh' }} />
       <UI
         onToggleLevel={(level) => {
+          window.showStartsCells = false
+          setRouteInfo(
+            {
+              startCell: null,
+              finishCell: null,
+              routeCellIds: [],
+              showStartsCells: false,
+            }
+          )
           console.log('toggleLevel', level);
           // Сбросить предыдущую выбранную фичу и скрыть попап
           if (selectedFeatureRef.current && selectedFeatureRef.current.color) {
