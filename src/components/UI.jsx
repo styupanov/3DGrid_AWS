@@ -42,7 +42,7 @@ const UI = ({
               showParentFilter,
               routeInfo,
               setCalculating,
-}) => {
+            }) => {
   const [searchId, setSearchId] = useState('')
   const [searchParentId, setSearchParentId] = useState('')
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -58,9 +58,25 @@ const UI = ({
   })
   const [selectedProp, setSelectedProp] = useState('pc_build3d')
   const [collapsed, setCollapsed] = useState(false)
+  const [collapsedNav, setCollapsedNav] = useState(false)
   const [startCell, setStartCell] = useState(null);
   const [finishCell, setFinishCell] = useState(null);
   const [routeCellIds, setRouteCellIds] = useState([]);
+
+  // === мобильная логика ширины (новое) ===
+  const [isMobile, setIsMobile] = useState(false);
+  const [leftCollapsedWidth, setLeftCollapsedWidth] = useState(false);
+  const [rightCollapsedWidth, setRightCollapsedWidth] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const leftPanelWidth = isMobile ? (leftCollapsedWidth ? 44 : 300) : 300;   // справа → налево
+  const rightPanelWidth = isMobile ? (rightCollapsedWidth ? 44 : 300) : 300; // слева → направо
 
   const { user, signOut } = useAuthenticator((context) => [context.user]);
   const handleSliderChange = (key, value) => {
@@ -80,8 +96,6 @@ const UI = ({
     TJ: {label: 'Traffic jam index', value: 'TJ'},
   }
 
-
-
   useEffect(() => {
     const level = activeLevels;
 
@@ -95,12 +109,10 @@ const UI = ({
       AQI: [getLevelConfig(level, 'AQI').min, getLevelConfig(level, 'AQI').max],
       TJ: [getLevelConfig(level, 'TJ').min, getLevelConfig(level, 'TJ').max],
     };
-    console.log('setSliderValues updated useEffect', updated);
     setSliderValues(updated);
   }, [activeLevels]);
 
   useEffect(() => {
-    console.log('onUpdateFilterRanges sliderValues useEffect', sliderValues);
     onUpdateFilterRanges(sliderValues);
   }, [sliderValues, onUpdateFilterRanges]);
 
@@ -110,19 +122,6 @@ const UI = ({
 
 
   const renderLegend = () => {
-    const baseColor = {
-      pc_build3d: '#67000D',
-      pc_green3d: '#006837',
-      pc_roads_3d: '#1A1A1A'
-    }[selectedProperty] || '#000000'
-
-    const commonColors = [
-      '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0'
-    ].map(opacity => {
-      const alpha = parseFloat(opacity)
-      return baseColor + Math.floor(alpha * 255).toString(16).padStart(2, '0')
-    })
-
     const colors = [
       'rgba(0, 102, 255, 0.05)',
       'rgba(0, 149, 255, 0.2)',
@@ -136,42 +135,55 @@ const UI = ({
       'rgba(255, 0, 0, 1)'
     ];
 
-    const { thresholds, labels } = getLevelConfig(activeLevels, selectedProperty);
+    const { thresholds = [], labels = [] } = getLevelConfig(activeLevels, selectedProperty);
 
     const getColorSchemeUnit = (level, prop) => {
       const tinyBoys = ['pc_build3d', 'pc_green3d', 'pc_roads_3d', 'pc_water3d'];
       const weirdBoys = ['LST', 'NDVI', 'AQI', 'TJ'];
 
       if (weirdBoys.includes(prop)) return '';
-
       if (level === 5 && tinyBoys.includes(prop)) return '10⁻⁶ %';
-
       if (level === 4 && prop === 'pc_water3d') return '10⁻² %';
-
       return '%';
+    };
+
+    // подписи интервалов: пытаемся брать labels как границы, иначе thresholds
+    const getTick = (i) => {
+      if (labels.length === colors.length + 1) return `${labels[i]} – ${labels[i + 1]}`;
+      if (thresholds.length === colors.length + 1) return `${thresholds[i]} – ${thresholds[i + 1]}`;
+      return labels[i] ?? thresholds[i] ?? '';
     };
 
     return (
       <div className={'glass'}
-        style={{
-        position: 'fixed',
-        bottom: '10px',
-        backgroundColor: 'white',
-        width: '580px',
-        borderRadius: '8px',
-        padding: '8px 16px',
-        left: 'calc(100vw / 2 - 290px)',
-      }}>
+           style={{
+             position: 'fixed',
+             bottom: '10px',
+             backgroundColor: 'white',
+             borderRadius: '8px',
+             padding: '8px 12px',
+             zIndex: 998,
+             ...(isMobile
+                 ? { left: 12, right: 12, width: 'calc(100vw - 24px)' }
+                 : { width: '580px', left: 'calc(100vw / 2 - 290px)' }
+             )
+           }}>
         <div style={{ marginBottom: 8, fontWeight: 500 }}>
           {(props_dict[selectedProperty]?.label || selectedProperty) + ' '}
           to color scheme {' ' + getColorSchemeUnit(activeLevels, selectedProperty)}
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-around' }}>
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: isMobile ? 'space-between' : 'space-around',
+          gap: isMobile ? 6 : 8
+        }}>
           {colors.map((color, index) => (
             <div key={index} style={{
               textAlign: 'center',
-              maxWidth: '55px',
-              minWidth: '50px',
+              maxWidth: isMobile ? 48 : 55,
+              minWidth: isMobile ? 44 : 50,
               alignItems: 'center',
               display: 'flex',
               flexDirection: 'column'
@@ -179,14 +191,14 @@ const UI = ({
               <div
                 style={{
                   width: 40,
-                  height: 10,
+                  height: isMobile ? 8 : 10,
                   background: color,
                   borderRadius: 4,
                   marginBottom: 2
                 }}
               />
-              <div style={{ fontSize: 10 }}>
-                {labels[index - 1] === undefined ? 0 : labels[index]} – {labels[index + 1]}
+              <div style={{ fontSize: isMobile ? 9 : 10, lineHeight: 1.1 }}>
+                {getTick(index)}
               </div>
             </div>
           ))}
@@ -199,15 +211,12 @@ const UI = ({
   const levelMax = activeLevels === 5 ? 0.01 : activeLevels === 4 ? 1 : 10;
 
   const { min, max, step } = getLevelConfig(activeLevels, selectedProperty);
-  // if(user){
-  //   debugger
-  // }
 
   const availableFinishes = startCell
     ? data
       .filter(item => item.start_finish?.[0] === startCell)
       .map(item => item.start_finish[1])
-      .filter((v, i, arr) => arr.indexOf(v) === i) // уникальные
+      .filter((v, i, arr) => arr.indexOf(v) === i)
     : finishes;
 
   return (
@@ -220,6 +229,7 @@ const UI = ({
         },
       }}
     >
+      {/* LEFT: Display properties */}
       <Card
         className={'glass'}
         title="Display properties"
@@ -228,17 +238,40 @@ const UI = ({
           top: 20,
           left: 20,
           zIndex: 999,
-          minWidth: 300,
-          borderRadius: 8,
+          minWidth: isMobile ? 44 : 300,
           maxWidth: 300,
+          width: leftPanelWidth,
+          borderRadius: 8,
+          overflow: 'hidden',
+          transition: 'width 0.3s ease',
         }}
       >
+        {/* кнопка-ухо для горизонтального сворачивания (на мобиле) */}
+        {isMobile && (
+          <Button
+            size="small"
+            type="default"
+            style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              zIndex: 2,
+            }}
+            onClick={() => setLeftCollapsedWidth(v => !v)}
+          >
+            {leftCollapsedWidth ? '›' : '‹'}
+          </Button>
+        )}
+
+        {/* вертикальное свертывание как было (кнопка снизу) — оставляем; */}
         <div
           className={'scrollable-content'}
           style={{
-          maxHeight: '63vh',
-          overflow: 'scroll',
-        }}>
+            maxHeight: '63vh',
+            overflow: 'scroll',
+            // когда карточка сжата по ширине — скрываем контент, чтобы не «торчал»
+            display: isMobile && leftCollapsedWidth ? 'none' : 'block'
+          }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <div style={{ fontSize: 12 }}>Signed in as <strong>{user?.signInDetails?.loginId}</strong></div>
             <Button type="link" size="small" onClick={signOut}>Sign out</Button>
@@ -286,13 +319,8 @@ const UI = ({
                 value={activeLevels}
                 onChange={(value) => onToggleLevel(value)}
                 style={{ width: '100%', marginTop: 5 }}
-              >
-                {levels.map((level) => (
-                  <Option key={level} value={level}>
-                    Level {level}
-                  </Option>
-                ))}
-              </Select>
+                options={levels.map((level) => ({ label: `Level ${level}`, value: level }))}
+              />
             </div>
 
             <div style={{ marginTop: 10 }}>
@@ -347,29 +375,14 @@ const UI = ({
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
                 onSearch={() => onSearch(searchId)}
-                // onKeyDown={(e) => handleKeyDown(e, false)}
                 placeholder="Enter ID..."
                 enterButton
                 style={{ marginTop: 5 }}
               />
             </div>
-
-            {/*<div style={{ marginTop: 10, marginBottom: 20 }}>*/}
-            {/*  <strong>Search by Parent Cell ID</strong>*/}
-            {/*  <Input.Search*/}
-            {/*    value={searchParentId}*/}
-            {/*    onChange={(e) => setSearchParentId(e.target.value)}*/}
-            {/*    onSearch={() => onSearch(searchParentId, true)}*/}
-            {/*    // onKeyDown={(e) => handleKeyDown(e, true)}*/}
-            {/*    placeholder="Enter Parent ID..."*/}
-            {/*    enterButton*/}
-            {/*    style={{ marginTop: 5 }}*/}
-            {/*  />*/}
-            {/*</div>*/}
-
           </div>
         </div>
-        <div style={{ textAlign: 'center', marginTop: 0 }}>
+        <div style={{ textAlign: 'center', marginTop: 0, display: isMobile && leftCollapsedWidth ? 'none' : 'block' }}>
           <Button
             type="text"
             icon={collapsed ? <DownOutlined /> : <UpOutlined />}
@@ -382,6 +395,8 @@ const UI = ({
       <ConfigProvider>
         {/* … существующий Card здесь … */}
       </ConfigProvider>
+
+      {/* RIGHT: Route Navigation */}
       {activeLevels === 2 && (
         <div
           className={'glass'}
@@ -390,168 +405,211 @@ const UI = ({
             top: 60,
             right: 20,
             zIndex: 999,
-            minWidth: 250,
+            minWidth: isMobile ? 44 : 250,
             maxWidth: 300,
+            width: rightPanelWidth,
             background: 'white',
             borderRadius: 8,
-            padding: 12,
+            padding: 20,
             boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+            overflow: 'hidden',
+            transition: 'width 0.3s ease',
           }}
         >
+          {/* кнопка-ухо у левого края (для панели справа) */}
+          {isMobile && (
+            <Button
+              size="small"
+              type="default"
+              style={{
+                position: 'absolute',
+                top: 8,
+                left: 8,
+                zIndex: 2,
+              }}
+              onClick={() => setRightCollapsedWidth(v => !v)}
+            >
+              {rightCollapsedWidth ? '‹' : '›'}
+            </Button>
+          )}
+
+          {/* Заголовок спрячем в узком режиме, чтобы не ломать сетку */}
           <strong
             style={{
               marginBottom: '10px',
-              display: 'block'
+              paddingLeft: '15px',
+              display: isMobile && rightCollapsedWidth ? 'none' : 'block'
             }}
           >Route Navigation</strong>
-          <Button
-            type="primary"
-            style={{ width: '100%', marginBottom: 5 }}
-            onClick={() => {
-              window.showStartsCells = true;
-              onRouteChange(
-                prev => ({ ...prev, showStartsCells: true }),
-              )
+
+          <div
+            style={{
+              maxHeight: collapsedNav ? 0 : 1000,
+              overflow: 'hidden',
+              transition: 'max-height 0.3s ease-in-out',
+              display: isMobile && rightCollapsedWidth ? 'none' : 'block'
             }}
           >
-            Show Starts Cells
-          </Button>
-          <div style={{ marginTop: 10 }}>
-            <Select
-              disabled={true}
-              showSearch
-              placeholder="Start Cell"
-              style={{ width: '100%', marginBottom: 10 }}
-              value={routeInfo.startCell ? routeInfo.startCell : startCell}
-              onChange={(val) => {
-                setStartCell(val);
-                setFinishCell(null); // сбрасываем finish при смене start
-                onRouteChange({
-                  startCell: val,
-                  finishCell: null,
-                  routeCellIds: [],
-                  showStartsCells: true
-                });
-              }}
-              options={starts.map(s => ({ label: s, value: s }))}
-              optionFilterProp="label"
-              filterOption={(input, option) =>
-                option.label.toLowerCase().includes(input.toLowerCase())
-              }
-            />
-
-            <Select
-              disabled={true}
-              placeholder="Finish Cell"
-              style={{ width: '100%', marginBottom: 10 }}
-              value={routeInfo.finishCell ? routeInfo.finishCell : finishCell}
-              onChange={(val) => {
-                setFinishCell(val);
-                onRouteChange({
-                  startCell,
-                  finishCell: val,
-                  routeCellIds: [],
-                  showStartsCells: true
-                });
-              }}
-              options={availableFinishes.map(f => ({ label: f, value: f }))}
-            />
 
             <Button
               type="primary"
               style={{ width: '100%', marginBottom: 5 }}
-              onClick={async () => {
-                setCalculating(true);
-                try {
-                  const res = await fetch(
-                    'https://a80kcz8tm1.execute-api.eu-north-1.amazonaws.com/prod_routing/route',
-                    {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        start_cell: routeInfo.start_route_cell_id,
-                        finish_cell: routeInfo.finish_route_cell_id,
-                      }),
-                    }
-                  );
-
-                  if (!res.ok) {
-                    throw new Error(`API returned status ${res.status}`);
-                  }
-
-                  const ids = await res.json(); // ожидаем массив id
-                  console.log('Route IDs from API:', ids);
-
-                  setRouteCellIds(ids);
-                  onRouteChange({
-                    start_route_cell_id: routeInfo.start_route_cell_id,
-                    finish_route_cell: routeInfo.finish_route_cell_id,
-                    startCell: routeInfo.startCell,
-                    finishCell: routeInfo.finishCell,
-                    routeCellIds: ids,
-                    showStartsCells: true,
-                  });
-                } catch (err) {
-                  console.error('Error fetching route:', err);
-                  setRouteCellIds([]);
-                  onRouteChange({
-                    start_route_cell_id: routeInfo.start_route_cell_id,
-                    finish_route_cell: routeInfo.finish_route_cell_id,
-                    startCell: routeInfo.startCell,
-                    finishCell: routeInfo.finishCell,
-                    routeCellIds: [],
-                    showStartsCells: true,
-                  });
-                }
-              }}
-              disabled={!routeInfo.startCell || !routeInfo.finishCell}
-            >
-              Create Route
-            </Button>
-            <Button
-              type="default"
-              danger
-              style={{ width: '100%' }}
               onClick={() => {
-                setStartCell(null);
-                setFinishCell(null);
-                setRouteCellIds([]);
-                console.log('Route cleared');
-                onRouteChange({
-                  start_route_cell_id: null,
-                  finish_route_cell: null,
-                  startCell: null,
-                  finishCell: null,
-                  routeCellIds: [],
-                  showStartsCells: true,
-                });
-              }}
-            >
-              Clear Route
-            </Button>
-            <Button
-              type="default"
-              danger
-              style={{ width: '100%', marginTop: 5 }}
-              onClick={() => {
-                window.showStartsCells = false
+                window.showStartsCells = true;
                 onRouteChange(
-                  {
-                    startCell: null,
-                    finishCell: null,
-                    routeCellIds: [],
-                    showStartsCells: false,
-                  }
+                  prev => ({ ...prev, showStartsCells: true }),
                 )
               }}
             >
-              Hide Starts Cells
+              Show Starts Cells
             </Button>
+            <div style={{ marginTop: 10 }}>
+              <Select
+                disabled={true}
+                showSearch
+                placeholder="Start Cell"
+                style={{ width: '100%', marginBottom: 10 }}
+                value={routeInfo.startCell ? routeInfo.startCell : startCell}
+                onChange={(val) => {
+                  setStartCell(val);
+                  setFinishCell(null);
+                  onRouteChange({
+                    startCell: val,
+                    finishCell: null,
+                    routeCellIds: [],
+                    showStartsCells: true
+                  });
+                }}
+                options={starts.map(s => ({ label: s, value: s }))}
+                optionFilterProp="label"
+                filterOption={(input, option) =>
+                  option.label.toLowerCase().includes(input.toLowerCase())
+                }
+              />
+
+              <Select
+                disabled={true}
+                placeholder="Finish Cell"
+                style={{ width: '100%', marginBottom: 10 }}
+                value={routeInfo.finishCell ? routeInfo.finishCell : finishCell}
+                onChange={(val) => {
+                  setFinishCell(val);
+                  onRouteChange({
+                    startCell,
+                    finishCell: val,
+                    routeCellIds: [],
+                    showStartsCells: true
+                  });
+                }}
+                options={availableFinishes.map(f => ({ label: f, value: f }))}
+              />
+
+              <Button
+                type="primary"
+                style={{ width: '100%', marginBottom: 5 }}
+                onClick={async () => {
+                  setCalculating(true);
+                  try {
+                    const res = await fetch(
+                      'https://a80kcz8tm1.execute-api.eu-north-1.amazonaws.com/prod_routing/route',
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          start_cell: routeInfo.start_route_cell_id,
+                          finish_cell: routeInfo.finish_route_cell_id,
+                        }),
+                      }
+                    );
+
+                    if (!res.ok) {
+                      throw new Error(`API returned status ${res.status}`);
+                    }
+
+                    const ids = await res.json();
+                    console.log('Route IDs from API:', ids);
+
+                    setRouteCellIds(ids);
+                    onRouteChange({
+                      start_route_cell_id: routeInfo.start_route_cell_id,
+                      finish_route_cell: routeInfo.finish_route_cell_id,
+                      startCell: routeInfo.startCell,
+                      finishCell: routeInfo.finishCell,
+                      routeCellIds: ids,
+                      showStartsCells: true,
+                    });
+                  } catch (err) {
+                    console.error('Error fetching route:', err);
+                    setRouteCellIds([]);
+                    onRouteChange({
+                      start_route_cell_id: routeInfo.start_route_cell_id,
+                      finish_route_cell: routeInfo.finish_route_cell_id,
+                      startCell: routeInfo.startCell,
+                      finishCell: routeInfo.finishCell,
+                      routeCellIds: [],
+                      showStartsCells: true,
+                    });
+                  } finally {
+                    setCalculating(false);
+                  }
+                }}
+                disabled={!routeInfo.startCell || !routeInfo.finishCell}
+              >
+                Create Route
+              </Button>
+              <Button
+                type="default"
+                danger
+                style={{ width: '100%' }}
+                onClick={() => {
+                  setStartCell(null);
+                  setFinishCell(null);
+                  setRouteCellIds([]);
+                  console.log('Route cleared');
+                  onRouteChange({
+                    start_route_cell_id: null,
+                    finish_route_cell: null,
+                    startCell: null,
+                    finishCell: null,
+                    routeCellIds: [],
+                    showStartsCells: true,
+                  });
+                }}
+              >
+                Clear Route
+              </Button>
+              <Button
+                type="default"
+                danger
+                style={{ width: '100%', marginTop: 5 }}
+                onClick={() => {
+                  window.showStartsCells = false
+                  onRouteChange(
+                    {
+                      startCell: null,
+                      finishCell: null,
+                      routeCellIds: [],
+                      showStartsCells: false,
+                    }
+                  )
+                }}
+              >
+                Hide Starts Cells
+              </Button>
+            </div>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 0, display: isMobile && rightCollapsedWidth ? 'none' : 'block' }}>
+            <Button
+              type="text"
+              icon={collapsedNav ? <DownOutlined /> : <UpOutlined />}
+              onClick={() => setCollapsedNav(!collapsedNav)}
+            />
           </div>
         </div>
       )}
+
       {renderLegend()}
     </ConfigProvider>
   )

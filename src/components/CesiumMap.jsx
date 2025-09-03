@@ -34,7 +34,6 @@ const CesiumMap = () => {
   const selectedFeatureRef = useRef(null)
   const [renderedFeature, setRenderedFeature] = useState(null)
   const [copiedKey, setCopiedKey] = useState(null)
-  const [popupPosition, setPopupPosition] = useState({ x: 350, y: 20 })
   const [selectedLevel, setSelectedLevel] = useState(5)
   const [selectedCellId, setSelectedCellId] = useState(null)
   const [selectedCellLevel, setSelectedCellLevel] = useState(null)
@@ -85,6 +84,28 @@ const CesiumMap = () => {
     2: 6000,
     1: 7000
   }
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+// позиция попапа
+  const [popupPosition, setPopupPosition] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      return { x: 20, y: 20 }   // мобайл
+    }
+    return { x: 350, y: 20 }    // десктоп
+  });
+
+// и если нужно обновлять при ресайзе:
+  useEffect(() => {
+    // debugger
+    setPopupPosition(isMobile ? { x: 20, y: 20 } : { x: 350, y: 20 });
+  }, [isMobile]);
 
   // const getBaseColor = () => {
   //   switch (selectedProperty) {
@@ -700,7 +721,11 @@ const CesiumMap = () => {
         setRenderedFeature(pickedFeature)
         setSelectedCellId(pickedFeature.getProperty('cell_id'))
         setSelectedCellLevel(pickedFeature.getProperty('level'))
-        setPopupPosition({ x: 350, y: 20 })
+        if(isMobile){
+          setPopupPosition({ x: 20, y: 20 })
+        } else {
+          setPopupPosition({ x: 350 , y: 20 })
+        }
       } else {
         setSelectedCellId(null)
         setSelectedCellLevel(null)
@@ -963,7 +988,7 @@ const CesiumMap = () => {
           style={{
             position: 'absolute',
             top: `${popupPosition.y}px`,
-            left: `${popupPosition.x}px`,
+            left: ( isMobile === true ? '20px' : `${popupPosition.x}px`),
             // transform: 'translate(-50%, -100%)',
             // backgroundColor: 'rgba(0, 0, 50, 0.85)',
             color: 'black',
