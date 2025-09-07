@@ -1169,7 +1169,8 @@ const CesiumMap = () => {
                     pointerEvents: 'auto'
                   }}
                 >
-                  <strong>Height:</strong> {Math.floor(renderedFeature.getProperty('Height')?.toString())}{' '}
+                  <strong>Height:</strong> {renderedFeature.getProperty(
+                    'h_center_ellipsoid')?.toFixed(2).toString()}{' '}
                   <button
                     style={{
                       marginLeft: '6px',
@@ -1184,8 +1185,8 @@ const CesiumMap = () => {
                     onClick={(e) => {
                       e.stopPropagation()
                       console.log('[COPY]', renderedFeature.getProperty('Height')?.toString())
-                      navigator.clipboard.writeText(renderedFeature.getProperty('Height')?.toString())
-                      setCopiedKey('Height')
+                      navigator.clipboard.writeText(renderedFeature.getProperty('h_center_ellipsoid')?.toString())
+                      setCopiedKey('h_center_ellipsoid')
                       setTimeout(() => setCopiedKey(null), 1500)
                     }}
                     title="Скопировать"
